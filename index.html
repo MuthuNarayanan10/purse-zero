@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Purse Zero</title>
+<meta name="description" content="Private money app: payments, EMIs, loans and your debt-free plan.">
+<meta name="theme-color" content="#0E1330">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Purse Zero">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icons/favicon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="/config.js"></script>
+<script src="/firebase-shim.js"></script>
+</head>
+<body>
+<meta name="theme-color" content="#0E1330">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: phone app. Navy‑black hero cards with royal‑blue glow and gold for gold loans; every payment type owns one colour; month view is the heart. */
+:root{
+  --bg:#F3F5FA; --surface:#FFFFFF; --surface-2:#F0F2F8; --ink:#0D1222; --muted:#5F677E; --line:#E3E7F0;
+  --blue:#2F5BFF; --blue-2:#6A86FF; --blue-soft:#E7ECFF; --night:#0E1330; --night-2:#1B2457; --on-night:#FFFFFF; --on-night-2:rgba(255,255,255,.72);
+  --gold:#B07F12; --gold-2:#E2B54B; --gold-soft:#FBF1D8;
+  --good:#11994C; --good-bg:#E2F6E9; --warn:#B86E00; --warn-bg:#FFF2D8; --bad:#DC2F47; --bad-bg:#FDE7EA;
+  --k-family:#7C4DFF; --k-rent:#0E9384; --k-bills:#0A8FD4; --k-other:#6B7280;
+  --k-home:#2F5BFF; --k-personal:#4338CA; --k-app:#EA6A0C; --k-consumer:#D6336C; --k-card:#E11D48; --k-gold:#B07F12; --k-settle:#55657E; --k-hand:#9A5B2E; --k-spend:#2F5BFF;
+  --shadow:0 1px 2px rgba(16,24,64,.05),0 8px 24px rgba(16,24,64,.07);
+  --f-display:"Syne","Avenir Next",system-ui,sans-serif;
+  --f-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:20px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#090C17; --surface:#121829; --surface-2:#1A2136; --ink:#EEF1FA; --muted:#97A0BA; --line:#252E47;
+  --blue:#7390FF; --blue-2:#9AAEFF; --blue-soft:#1A2656; --night:#151B3A; --night-2:#24306B;
+  --gold:#E6BC57; --gold-2:#F3D27E; --gold-soft:#2C2614;
+  --good:#3FD883; --good-bg:#10301F; --warn:#FFC24F; --warn-bg:#33270E; --bad:#FF6F85; --bad-bg:#3A1621;
+  --k-family:#A88BFF; --k-rent:#3CC9B6; --k-bills:#4CC0F5; --k-other:#9CA3AF;
+  --k-home:#7390FF; --k-personal:#8C86FF; --k-app:#FF9A4D; --k-consumer:#F472A6; --k-card:#FF6F85; --k-gold:#E6BC57; --k-settle:#94A3BE; --k-hand:#D8996A; --k-spend:#7390FF;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#090C17; --surface:#121829; --surface-2:#1A2136; --ink:#EEF1FA; --muted:#97A0BA; --line:#252E47;
+  --blue:#7390FF; --blue-2:#9AAEFF; --blue-soft:#1A2656; --night:#151B3A; --night-2:#24306B;
+  --gold:#E6BC57; --gold-2:#F3D27E; --gold-soft:#2C2614;
+  --good:#3FD883; --good-bg:#10301F; --warn:#FFC24F; --warn-bg:#33270E; --bad:#FF6F85; --bad-bg:#3A1621;
+  --k-family:#A88BFF; --k-rent:#3CC9B6; --k-bills:#4CC0F5; --k-other:#9CA3AF;
+  --k-home:#7390FF; --k-personal:#8C86FF; --k-app:#FF9A4D; --k-consumer:#F472A6; --k-card:#FF6F85; --k-gold:#E6BC57; --k-settle:#94A3BE; --k-hand:#D8996A; --k-spend:#7390FF;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding:0 16px}
+.app{max-width:560px;margin:0 auto;padding-block:8px 170px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15}
+h1{font-family:var(--f-display);font-size:1.18rem;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{flex:none;width:40px;height:40px;border-radius:13px;box-shadow:0 6px 16px rgba(47,91,255,.3);overflow:hidden}
+.logo svg{width:100%;height:100%;display:block}
+h2{font-family:var(--f-display);font-size:1.06rem;font-weight:700}
+h3{font-size:.96rem;font-weight:700}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:.84rem} .tiny{font-size:.75rem}
+.label{font-size:.68rem;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);font-weight:800}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px}
+.top .sub{font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icons{display:flex;gap:6px}
+.ib{all:unset;cursor:pointer;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--surface);box-shadow:var(--shadow);color:var(--ink)}
+.ib svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ib.bell{position:relative}
+.ib .badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--bad);color:#fff;font-size:.68rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
+.ib[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.ib:focus-visible,.tab:focus-visible,.fab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* tab bar with centre add button */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:6px 12px calc(8px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.tabbar .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;gap:2px;position:relative}
+.tab{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 2px;color:var(--muted);font-size:.68rem;font-weight:800;position:relative}
+.tab svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--blue)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;top:-6px;width:22px;height:3px;border-radius:2px;background:var(--blue)}
+.tab .badge{position:absolute;top:0;left:calc(50% + 7px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad);color:#fff;font-size:.64rem;display:grid;place-items:center}
+.fab{all:unset;cursor:pointer;position:fixed;right:max(16px,calc(50% - 264px));bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:7;width:58px;height:58px;border-radius:20px;display:grid;place-items:center;color:#fff;background:linear-gradient(140deg,var(--blue),#1B2FA8);box-shadow:0 10px 24px rgba(47,91,255,.38)}
+.fab svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round}
+
+.screen{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* night hero */
+.hero{border-radius:24px;padding:20px;color:var(--on-night);background:radial-gradient(90% 120% at 100% 0%,rgba(47,91,255,.55),transparent 60%),radial-gradient(60% 80% at 0% 100%,rgba(226,181,75,.16),transparent 70%),linear-gradient(160deg,var(--night),var(--night-2));display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.hero .label{color:var(--on-night-2)}
+.hero .sub{color:var(--on-night-2);font-size:.86rem}
+.hero.gold{background:radial-gradient(90% 120% at 100% 0%,rgba(226,181,75,.45),transparent 60%),linear-gradient(160deg,var(--night),#2A2148)}
+.big{font-family:var(--f-display);font-weight:800;font-size:clamp(2.2rem,11vw,3.1rem);letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.hbar{height:8px;border-radius:4px;background:rgba(255,255,255,.16);overflow:hidden;display:flex}
+.hbar i{display:block;height:100%}
+.hrow{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.84rem;color:var(--on-night-2)}
+.hrow b{color:#fff}
+.hbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-weight:700;font-size:.85rem}
+.hbtn.solid{background:#fff;color:#0E1330}
+.hbtn:focus-visible{outline:2px solid #fff}
+.next{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:14px;padding:10px 12px}
+.next .ico{background:rgba(255,255,255,.12)!important;color:#fff!important}
+
+/* spend card */
+.spend{border-radius:var(--r);padding:16px;background:linear-gradient(140deg,var(--blue),#1C33B8);color:#fff;display:flex;flex-direction:column;gap:10px}
+.spend .label{color:rgba(255,255,255,.75)}
+.spend .v{font-family:var(--f-display);font-weight:800;font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.spend.over{background:linear-gradient(140deg,#D92D48,#8F1730)}
+.smeter{height:7px;border-radius:4px;background:rgba(255,255,255,.22);overflow:hidden}
+.smeter i{display:block;height:100%;background:#fff;border-radius:4px}
+.quick{display:flex;gap:8px}
+.quick input{border:0;border-radius:13px;padding:12px 14px;background:rgba(255,255,255,.16);color:#fff}
+.quick input::placeholder{color:rgba(255,255,255,.65)}
+.quick .btn{background:#fff;color:#1C33B8}
+
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--surface);border-radius:18px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:3px;min-width:0;cursor:default}
+.tile .v{font-family:var(--f-display);font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+button.tile{all:unset;box-sizing:border-box;background:var(--surface);border-radius:18px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:3px;min-width:0;cursor:pointer}
+button.tile:focus-visible{outline:2px solid var(--blue)}
+
+/* payment rows */
+.ico{flex:none;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)}
+.ico svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.prow{display:grid;grid-template-columns:42px minmax(0,1fr) auto 40px;gap:12px;align-items:center;padding:11px 10px;margin:0 -10px;border-radius:16px;transition:background .2s}
+.prow .mid{min-width:0;cursor:pointer}
+.prow .mid b{display:block;font-weight:700;overflow-wrap:anywhere}
+.prow .meta{display:block;font-size:.76rem;color:var(--muted);overflow-wrap:anywhere}
+.prow .amt{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prow .st{display:block;font-size:.7rem;font-weight:700;margin-top:1px}
+.st.overdue,.st.today{color:var(--bad)} .st.soon{color:var(--warn)} .st.upcoming{color:var(--muted)} .st.paid{color:var(--good)}
+.chk{all:unset;cursor:pointer;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);color:transparent;transition:all .2s}
+.chk svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chk:hover{border-color:var(--good);color:var(--good)}
+.chk:focus-visible{outline:2px solid var(--blue)}
+.prow.overdue .chk,.prow.today .chk{border-color:var(--bad)}
+.prow.paid{background:var(--good-bg)}
+.prow.paid .chk{background:var(--good);border-color:var(--good);color:#fff}
+.prow.paid .amt{color:var(--good)}
+.prow.paid .ico{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.dgrp{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:14px 0 4px;border-top:1px solid var(--line)}
+.dgrp:first-child{border-top:0;padding-top:0}
+.dgrp b{font-family:var(--f-display);font-size:.92rem}
+.dgrp span{font-size:.75rem;color:var(--muted);font-weight:700}
+.dgrp.today b{color:var(--blue)}
+
+/* month header */
+.mswitch{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
+.mswitch h2{text-align:center;font-size:1.25rem}
+.mswitch .ib{width:44px;height:44px}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chip{font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.76rem;color:var(--muted);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:3px;background:var(--c)}
+.catbar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.catbar i{display:block;height:100%;background:var(--c)}
+.meter{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--good);border-radius:4px;transition:width .4s}
+
+/* loans */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface);padding:4px;border-radius:14px;box-shadow:var(--shadow)}
+.seg.three{grid-template-columns:repeat(3,1fr)}
+.seg button{all:unset;cursor:pointer;text-align:center;padding:10px 0;border-radius:10px;font-size:.84rem;font-weight:800;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button:focus-visible{outline:2px solid var(--blue)}
+.ghead{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--c);margin-top:4px}
+.ghead::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c)}
+.ghead span{margin-left:auto;color:var(--muted);font-size:.78rem;letter-spacing:0;text-transform:none}
+.lcard{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:6px 12px;align-items:center;background:var(--surface);border-radius:18px;padding:14px;box-shadow:var(--shadow);border-left:4px solid var(--c);width:100%}
+.lcard:focus-visible{outline:2px solid var(--blue)}
+.lcard b{font-weight:700;overflow-wrap:anywhere}
+.lcard .meta{font-size:.76rem;color:var(--muted);display:block}
+.lcard .bal{text-align:right;font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums}
+.lcard .bal small{display:block;font-family:var(--f-body);font-size:.7rem;color:var(--muted);font-weight:600}
+.lcard .prog{grid-column:1/-1;display:flex;flex-direction:column;gap:5px}
+.lcard .prog .meter i{background:var(--c)}
+.lcard .prog .tiny{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-weight:600}
+.lcard.goldy{background:linear-gradient(160deg,var(--gold-soft),var(--surface) 55%)}
+
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.fact{background:var(--surface-2);border-radius:13px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fact b{font-family:var(--f-display);font-size:1rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.fact span{font-size:.66rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.cmp{width:100%;border-collapse:collapse;font-size:.82rem}
+.cmp th,.cmp td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+.cmp th{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.cmp .n{text-align:right;font-variant-numeric:tabular-nums}
+.cmp tr.best td{color:var(--good);font-weight:800}
+.tablewrap{overflow-x:auto}
+
+/* forms */
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted);font-weight:700;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;min-width:0;font-size:16px}
+input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:1px;border-color:transparent}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.row>*{flex:1 1 130px}
+.check{display:flex;gap:10px;align-items:center;font-weight:700;font-size:.88rem}
+.check input{width:22px;height:22px;flex:none;accent-color:var(--blue)}
+.btn{font:inherit;font-weight:800;cursor:pointer;border-radius:14px;padding:12px 18px;border:0;background:var(--blue);color:#fff;font-size:.92rem}
+.btn.dark{background:var(--ink);color:var(--surface)}
+.btn.ghost{background:var(--blue-soft);color:var(--blue)}
+.btn.danger{background:var(--bad-bg);color:var(--bad)}
+.btn.good{background:var(--good);color:#fff}
+.btn.sm{padding:8px 12px;font-size:.8rem;border-radius:11px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.linkbtn{all:unset;cursor:pointer;color:var(--blue);font-weight:800;font-size:.84rem}
+.linkbtn:focus-visible{outline:2px solid var(--blue)}
+.hint{font-size:.78rem;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:800;width:max-content;white-space:nowrap}
+.pill.good{background:var(--good-bg);color:var(--good)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.blue{background:var(--blue-soft);color:var(--blue)} .pill.gold{background:var(--gold-soft);color:var(--gold)} .pill.plain{background:var(--surface-2);color:var(--muted)}
+.alert{border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;font-size:.87rem}
+.alert.bad{background:var(--bad-bg);color:var(--bad)} .alert.warn{background:var(--warn-bg);color:var(--warn)} .alert.info{background:var(--blue-soft);color:var(--ink)} .alert.gold{background:var(--gold-soft);color:var(--ink)} .alert.good{background:var(--good-bg);color:var(--ink)}
+.alert b{font-weight:800}
+.alert .dot{flex:none;width:8px;height:8px;border-radius:50%;background:currentColor;margin-top:6px}
+.alert.info .dot{background:var(--blue)} .alert.gold .dot{background:var(--gold)} .alert.good .dot{background:var(--good)}
+.example{background:var(--warn-bg);color:var(--warn);border-radius:16px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:.86rem}
+
+/* add picker */
+.pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pick button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;background:var(--surface);text-align:center;font-size:.76rem;font-weight:700;box-shadow:var(--shadow)}
+.pick button small{font-size:.66rem;color:var(--muted);font-weight:600}
+.pick button:focus-visible{outline:2px solid var(--blue)}
+
+/* debt-free */
+.scn{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:12px 14px;border-radius:16px;background:var(--surface-2);align-items:center}
+.scn.rec{background:var(--blue-soft);outline:2px solid var(--blue)}
+.scn b{font-weight:800}
+.scn .when{font-family:var(--f-display);font-weight:800;text-align:right;font-size:1.02rem}
+.scn .d{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.tl{display:flex;flex-direction:column}
+.tli{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:start;position:relative;padding-bottom:14px}
+.tli::before{content:"";position:absolute;left:9px;top:18px;bottom:0;width:2px;background:var(--line)}
+.tli:last-child::before{display:none}
+.tli .dt{width:20px;height:20px;border-radius:50%;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 18%,transparent);margin-top:1px}
+.tli b{font-weight:800}
+.tli .when{font-weight:800;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-body);font-size:10.5px;font-variant-numeric:tabular-nums}
+.moves{display:flex;flex-direction:column;gap:10px}
+.move{border-left:3px solid var(--blue);padding:3px 0 3px 12px}
+.move .imp{color:var(--good);font-size:.8rem;font-weight:800}
+.answer{white-space:pre-wrap;background:var(--surface-2);border-radius:14px;padding:12px;min-height:3em;overflow-wrap:anywhere}
+
+/* sheet */
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(9,12,30,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:90%;overflow:auto;border-radius:26px 26px 0 0;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.x{all:unset;cursor:pointer;color:var(--muted);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:1.3rem;background:var(--surface-2)}
+.x:focus-visible{outline:2px solid var(--blue)}
+.shead{display:flex;align-items:center;gap:12px}
+.shead .grow{flex:1;min-width:0}
+details.calc{background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+details.calc[open]{display:flex;flex-direction:column;gap:10px}
+details.calc summary{cursor:pointer;font-weight:800;font-size:.9rem;color:var(--blue);list-style:none}
+details.calc summary::-webkit-details-marker{display:none}
+details.calc summary::after{content:" ▾";}
+
+/* lists */
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .t{min-width:0;overflow-wrap:anywhere}
+.cat{font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.cbar{display:grid;grid-template-columns:88px minmax(0,1fr) 78px;gap:10px;align-items:center;font-size:.84rem}
+.cbar .track{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.cbar .track i{display:block;height:100%;background:var(--blue)}
+.cbar .num{text-align:right}
+.chk{border-radius:12px!important}
+.prow.sel{background:var(--blue-soft)}
+.prow.sel .chk{background:var(--blue);border-color:var(--blue)!important;color:#fff}
+.prow.leaving{opacity:0;transform:translateX(24px);transition:opacity .25s,transform .25s}
+.selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:35;width:min(528px,calc(100% - 32px));background:var(--night);color:#fff;border-radius:18px;padding:10px 10px 10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px rgba(9,12,30,.35)}
+.selbar .grow{flex:1;min-width:0;font-size:.82rem;color:rgba(255,255,255,.75)}
+.selbar .grow b{display:block;color:#fff;font-size:1rem;font-variant-numeric:tabular-nums}
+.selbar .clr{all:unset;cursor:pointer;padding:8px 10px;border-radius:10px;font-weight:700;font-size:.82rem;color:rgba(255,255,255,.8)}
+.selbar .clr:focus-visible{outline:2px solid #fff}
+.srow{display:grid;grid-template-columns:42px minmax(0,1fr) auto 40px;gap:12px;align-items:center;padding:11px 10px;margin:0 -10px;border-radius:16px}
+.srow .mid{min-width:0;cursor:pointer}
+.srow .mid b{display:block;font-weight:700;overflow-wrap:anywhere}
+.srow .meta{display:block;font-size:.75rem;color:var(--muted);overflow-wrap:anywhere}
+.srow .amt{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.srow .amt s{display:block;font-size:.72rem;color:var(--muted);font-weight:600}
+.srow .amt small{display:block;font-size:.7rem;font-weight:700;color:var(--good)}
+.srow.on{background:var(--gold-soft)}
+.srow.on .chk{background:var(--gold);border-color:var(--gold)!important;color:#fff}
+.srow.miss .amt{color:var(--warn)}
+.tbrk{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:.88rem}
+.tbrk:first-child{border-top:0}
+.tbrk i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.tbrk b{font-variant-numeric:tabular-nums}
+.bgrp{border-top:1px solid var(--line)}
+.bgrp:first-child{border-top:0}
+.bhead{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:grid;grid-template-columns:10px minmax(0,1fr) auto 18px;gap:10px;align-items:center;padding:11px 0;font-size:.9rem}
+.bhead i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.bhead b{font-variant-numeric:tabular-nums}
+.bhead .chev{color:var(--muted);font-size:.8rem;text-align:right}
+.bhead:focus-visible{outline:2px solid var(--blue);border-radius:8px}
+.bgrp.open .bhead span:nth-child(2){color:var(--c);font-weight:800}
+.bbody{display:flex;flex-direction:column;gap:8px;padding:0 0 12px 20px}
+.bitem{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:10px;align-items:center;background:var(--surface-2);border-radius:14px;padding:10px 12px;border-left:3px solid var(--c)}
+.bitem b{font-weight:700;overflow-wrap:anywhere}
+.bin{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:0 8px}
+.bin span{color:var(--muted);font-weight:700}
+.bin input{border:0;background:transparent;padding:9px 2px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.bin:focus-within{outline:2px solid var(--blue);border-color:transparent}
+.bin input:focus-visible{outline:none}
+.btot{display:flex;justify-content:space-between;padding:12px 0 0;border-top:2px solid var(--line);font-weight:800}
+.btot b{font-family:var(--f-display);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.cov{display:flex;flex-direction:column;gap:6px}
+.cov div{display:flex;justify-content:space-between;gap:8px;font-size:.86rem}
+.cov .ok{color:var(--good);font-weight:700}
+.cov .no{color:var(--muted)}
+.selhint{font-size:.78rem;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:11px 16px;border-radius:13px;font-size:.86rem;font-weight:700;z-index:40;max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center}
+.toast button{all:unset;cursor:pointer;color:var(--gold-2);font-weight:800}
+
+/* lock */
+.lock{position:fixed;inset:0;z-index:50;color:#fff;background:radial-gradient(90% 70% at 100% 0%,rgba(47,91,255,.5),transparent 60%),linear-gradient(160deg,#0E1330,#1B2457);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px 16px}
+.lock h2{color:#fff;font-size:1.4rem}
+.dots{display:flex;gap:14px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.8)}
+.dots i.on{background:#fff}
+.dots.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.keys{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.keys button{all:unset;cursor:pointer;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:1.6rem;font-weight:600;font-family:var(--f-display);background:rgba(255,255,255,.1);color:#fff}
+.keys button:active{background:rgba(255,255,255,.28)}
+.keys button:focus-visible{outline:2px solid #fff}
+.keys .blank{visibility:hidden}
+.lock .linkbtn{color:#fff;opacity:.85}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <div class="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A63FF"/><stop offset="1" stop-color="#0E1330"/></linearGradient></defs><rect width="48" height="48" rx="14" fill="url(#lg)"/><circle cx="24" cy="24" r="12.5" fill="none" stroke="#E2B54B" stroke-width="4.5"/><path d="M16 32 32 16" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/></svg></span><div style="min-width:0"><h1 id="title">Purse Zero</h1><div class="sub" id="topSub">Saved on this device</div></div></div>
+    <div class="icons">
+      <button class="ib bell" id="bellBtn" type="button" aria-label="Alerts"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge" id="bellBadge" hidden></span></button>
+      <button class="ib" id="eyeBtn" type="button" aria-label="Hide amounts" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button class="ib" id="moreBtn" type="button" aria-label="Spending, savings and settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg></button>
+    </div>
+  </div>
+  <div class="example" id="exampleBar" hidden><span>You're seeing <b>example numbers</b>. Clear them to add your own.</span><button class="btn sm dark" id="startFresh" type="button">Start with mine</button></div>
+  <div class="example" id="confirmBar" hidden><span id="confirmMsg"></span><span style="display:flex;gap:8px"><button class="btn sm danger" id="confirmYes" type="button">Yes</button><button class="btn sm ghost" id="confirmNo" type="button">Cancel</button></span></div>
+
+  <!-- HOME -->
+  <section class="screen" data-screen="home">
+    <div class="hero">
+      <span class="label" id="hMonth">This month</span>
+      <div><div class="big" id="hLeft">₹0</div><div class="sub" id="hLeftSub">still to pay this month</div></div>
+      <div class="hbar" id="hBar"></div>
+      <div class="hrow"><span id="hPaid"></span><span id="hCount"></span></div>
+      <div><button class="hbtn solid" type="button" data-go="month">Open payments ›</button></div>
+    </div>
+    <div class="card"><div class="head"><h2>To pay next</h2><button class="linkbtn" type="button" data-go="month">See all ›</button></div><div class="list" id="homeNext"></div></div>
+    <div class="tiles" id="homeTiles"></div>
+    <div class="spend" id="spendCard">
+      <div class="head"><span class="label">Safe to spend today</span><button class="hbtn" type="button" id="spendMore" style="padding:6px 10px;font-size:.76rem">Spending ›</button></div>
+      <div class="v" id="sLeft">₹0</div>
+      <div class="smeter"><i id="sMeter" style="width:0"></i></div>
+      <div class="small" style="color:rgba(255,255,255,.85)" id="sSub"></div>
+      <form class="quick" id="quickForm" autocomplete="off"><input id="quick" placeholder="450 swiggy dinner" aria-label="Add a spend"><button class="btn sm" type="button" data-submit>Add</button></form>
+    </div>
+  </section>
+
+  <!-- MONTH -->
+  <section class="screen" data-screen="month" hidden>
+    <div class="mswitch"><button class="ib" type="button" id="mPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><h2 id="mTitle">October 2026</h2><button class="ib" type="button" id="mNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
+    <div class="hero" style="gap:10px">
+      <div class="hrow" style="align-items:baseline"><span class="label">To pay this month</span><button class="hbtn" type="button" id="mToday" style="padding:5px 10px;font-size:.74rem">Back to this month</button></div>
+      <div class="big" id="mTotal">₹0</div>
+      <div class="hbar" id="mBar"></div>
+      <div class="hrow"><span id="mPaid"></span><span id="mPend"></span></div>
+    </div>
+    <div class="legend" id="mLegend"></div>
+    <div class="chips" id="mFilter"></div>
+    <div class="card"><div class="list" id="mList"></div></div>
+    <button class="btn ghost wide" type="button" id="mAddOne">＋ Add a one‑time payment to this month</button>
+  </section>
+
+  <!-- LOANS -->
+  <section class="screen" data-screen="loans" hidden>
+    <div class="seg" id="lSeg"><button type="button" data-lseg="loans" aria-pressed="true">Loans &amp; EMIs</button><button type="button" data-lseg="pays" aria-pressed="false">Monthly payments</button></div>
+    <div class="tiles" id="lTiles"></div>
+    <div id="lList" class="stack"></div>
+  </section>
+
+  <!-- SETTLE -->
+  <section class="screen" data-screen="settle" hidden>
+    <div class="hero gold">
+      <span class="label">To be debt‑free today you need</span>
+      <div><div class="big" id="stTotal">₹0</div><div class="sub" id="stSub"></div></div>
+      <div class="hbar" id="stBar"></div>
+      <div class="hrow" id="stRow"></div>
+    </div>
+    <div id="stMiss"></div>
+    <div class="card"><div class="head"><h2>What it's made of</h2><span class="tiny muted">tap a type to edit amounts</span></div><div id="stBreak"></div></div>
+    <div class="card">
+      <div class="head"><h2>My settle plan</h2><span class="pill gold" id="stPlanPill">0 planned</span></div>
+      <div class="facts" id="stPlanFacts"></div>
+      <label class="f">Money I can arrange now (₹)<input id="stFund" type="number" min="0" step="1000" inputmode="numeric" placeholder="e.g. 200000 from bonus, PF, gold, family"></label>
+      <div id="stCover"></div>
+    </div>
+    <div class="chips" id="stChips"></div>
+    <div class="card"><div class="selhint"><span>Tick what you want to close. Tap a row to set the settle amount and month.</span><button class="linkbtn" type="button" id="stSmart">Tick best 3</button></div><div class="list" id="stList"></div></div>
+    <button class="btn ghost wide" type="button" id="stAdd">＋ Add a debt to settle</button>
+    <div class="card" id="stDoneCard" hidden><h2>Settled &amp; closed</h2><div class="list" id="stDone"></div></div>
+  </section>
+
+  <!-- DEBT-FREE -->
+  <section class="screen" data-screen="free" hidden>
+    <div class="hero gold">
+      <span class="label">Your fastest way to ₹0 debt</span>
+      <div><div class="big" id="fWhen">—</div><div class="sub" id="fSub"></div></div>
+      <div class="hrow" id="fRow"></div>
+    </div>
+    <div id="fAlerts" class="stack"></div>
+    <div class="card">
+      <div class="head"><h2>Your monthly money</h2><span class="tiny muted">edit to see the plan change</span></div>
+      <div class="row">
+        <label class="f">Take‑home salary<input id="pIncome" type="number" min="0" step="500" inputmode="numeric"></label>
+        <label class="f">Salary day<input id="pSalDay" type="number" min="1" max="31" step="1" inputmode="numeric"></label>
+      </div>
+      <div class="row">
+        <label class="f">Living money (food, travel, home)<input id="pLiving" type="number" min="0" step="500" inputmode="numeric"></label>
+        <label class="f">Save each month<input id="pSave" type="number" min="0" step="500" inputmode="numeric"></label>
+      </div>
+      <div class="list" id="fMoney"></div>
+    </div>
+    <div class="card"><h2>Ways to become debt‑free</h2><p class="small muted">No target needed. Compare and pick what you can afford; the blue one is what your numbers allow today.</p><div class="stack" id="fScn"></div></div>
+    <div class="card"><h2>Close in this order</h2><p class="small muted" id="fOrderSub"></p><div class="tl" id="fOrder"></div></div>
+    <div class="card"><h2>Your EMIs get lighter</h2><p class="small muted">Monthly loan payments if you only pay EMIs. Each drop is a loan ending.</p><svg class="chart" id="fLoad" viewBox="0 0 420 210" role="img" aria-label="Monthly loan payments over the next 36 months"></svg><div class="legend" id="fLoadLeg"></div><div class="list" id="fDrops"></div></div>
+    <div class="card">
+      <h2>Got a bonus or extra money?</h2>
+      <label class="f">Amount available now (₹)<input id="xAmt" type="number" min="0" step="1000" inputmode="numeric" placeholder="50000"></label>
+      <div id="xOut" class="stack"></div>
+    </div>
+    <div class="hero" style="gap:10px">
+      <span class="label">AI money coach</span>
+      <h2 style="color:#fff">Find the smartest, easiest path</h2>
+      <p class="sub">Reads every loan, card, gold pledge, family payment and your spending.</p>
+      <div><button class="hbtn solid" type="button" id="aiReview">Get my AI plan</button></div>
+    </div>
+    <div class="card" id="aiOut" hidden></div>
+    <div class="card">
+      <h2>Ask the coach</h2>
+      <div class="chips" id="askChips" style="flex-wrap:wrap"></div>
+      <form style="display:flex;gap:8px" id="askForm" autocomplete="off"><input id="askQ" placeholder="Should I prepay my home loan?" aria-label="Question for the AI coach"><button class="btn" type="button" data-submit id="askBtn">Ask</button></form>
+      <div class="answer" id="askOut" hidden></div>
+      <p class="tiny muted">AI suggestions are general guidance, not licensed financial advice. Check charges with your lender before acting.</p>
+    </div>
+  </section>
+
+  <!-- MORE -->
+  <section class="screen" data-screen="more" hidden>
+    <div class="seg three" id="oSeg"><button type="button" data-oseg="spend" aria-pressed="true">Spending</button><button type="button" data-oseg="save" aria-pressed="false">Savings</button><button type="button" data-oseg="set" aria-pressed="false">Settings</button></div>
+    <div data-opart="spend" class="stack">
+      <div class="card"><h2>Add a spend</h2>
+        <form id="expForm" class="row" autocomplete="off">
+          <label class="f">Amount ₹<input id="eAmt" type="number" min="1" step="1" required inputmode="numeric"></label>
+          <label class="f">Category<select id="eCat"></select></label>
+          <label class="f">Note<input id="eNote" placeholder="optional"></label>
+          <label class="f">Date<input id="eDate" type="date"></label>
+          <button class="btn" type="button" data-submit>Add</button>
+        </form></div>
+      <div class="card"><h2 id="spTitle">This month</h2><div class="stack" id="catBars"></div></div>
+      <div class="card"><h2>All spends this month</h2><div class="list" id="spList"></div></div>
+    </div>
+    <div data-opart="save" class="stack" hidden>
+      <div class="tiles" id="sTiles"></div>
+      <div class="card"><h2 id="gTitle">Add a savings goal</h2>
+        <form id="goalForm" class="row" autocomplete="off">
+          <label class="f">Goal<input id="gName" placeholder="Emergency fund" required></label>
+          <label class="f">Target ₹<input id="gTarget" type="number" min="1" step="1" required inputmode="numeric"></label>
+          <label class="f">Saved ₹<input id="gSaved" type="number" min="0" step="1" inputmode="numeric"></label>
+          <button class="btn" type="button" data-submit id="gSubmit">Add goal</button>
+        </form></div>
+      <div class="stack" id="goalList"></div>
+    </div>
+    <div data-opart="set" class="stack" hidden>
+      <div class="card"><div class="head"><h3>App PIN</h3><button class="btn sm dark" type="button" id="lockBtn">Lock now</button></div><p class="small muted" id="pinStatus"></p>
+        <div class="row"><label class="f">New PIN (4–6 digits)<input id="pin1" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label><label class="f">Repeat PIN<input id="pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" id="pinSave">Set PIN</button><button class="btn sm danger" type="button" id="pinRemove" hidden>Remove PIN</button></div>
+        <p class="tiny muted">Locks the app on this phone and asks again after a minute away. Your data is stored in your private Firebase account; only your Google sign‑in can open it.</p></div>
+      <div class="card"><div class="head"><h3>Hide amounts</h3><button class="btn sm ghost" type="button" id="hideToggle">Turn on</button></div><p class="small muted">Shows ₹•••• everywhere. Same as the eye button.</p></div>
+      <div class="card"><h3>Put it on your home screen</h3><p class="small muted">Chrome: menu ⋮ → <b>Install app</b> (or Add to Home Screen). iPhone Safari: Share → <b>Add to Home Screen</b>.</p></div>
+      <div class="card"><h3>Your data</h3><p class="small muted" id="dataStatus"></p><button class="btn sm danger" type="button" id="wipeAll">Erase everything</button></div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabbar" role="tablist" aria-label="Screens"><div class="in">
+  <button class="tab" role="tab" data-tab="home" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button class="tab" role="tab" data-tab="month" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M9 15l2 2 4-4"/></svg>Month<span class="badge" id="mBadge" hidden></span></button>
+  <button class="tab" role="tab" data-tab="loans" aria-selected="false"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>Loans</button>
+  <button class="tab" role="tab" data-tab="settle" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 12l3-3 4 4 8-8 3 3-11 11z"/></svg>Settle</button>
+  <button class="tab" role="tab" data-tab="free" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-8M21 20H3"/></svg>Plan</button>
+</div></nav>
+<button class="fab" type="button" id="fab" aria-label="Add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<div class="scrim" id="sheet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-label="Details" id="sheetBody"></div></div>
+
+<div class="lock" id="lock" hidden>
+  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+  <h2>Enter your PIN</h2><div class="dots" id="dots"></div><div class="keys" id="keys"></div>
+  <button class="linkbtn" type="button" id="forgot">Forgot PIN?</button>
+  <form id="forgotForm" hidden style="display:flex;flex-direction:column;gap:8px;width:min(320px,100%)"><label class="f" style="color:#fff">To reset, type your monthly take‑home salary as saved in the app<input id="forgotSal" type="number" inputmode="numeric"></label><button class="btn" type="button" data-submit>Reset PIN</button></form>
+</div>
+<div class="selbar" id="selBar" hidden role="region" aria-label="Selected payments"><button class="clr" type="button" id="selClear">Clear</button><div class="grow"><span id="selCount">0 selected</span><b id="selSum">₹0</b></div><button class="btn good" type="button" id="selPay">✓ Mark paid</button></div>
+<div class="toast" id="toast" hidden><span id="toastMsg"></span><button type="button" id="toastAct" hidden>Undo</button></div>
+
+<script>
+(()=>{
+/* ================= constants ================= */
+const CAT={
+  family:{label:"Family",group:"pay",ph:"Parents",rank:0},
+  rent:{label:"Rent",group:"pay",ph:"House rent",rank:1},
+  home:{label:"Home loan",group:"loan",calc:"emi",ph:"SBI Home Loan",rank:2},
+  personal:{label:"Personal loan",group:"loan",calc:"emi",ph:"HDFC Personal 1",rank:3},
+  app:{label:"App loan",group:"loan",calc:"emi",ph:"App loan 1",rank:4},
+  consumer:{label:"Product EMI",group:"loan",calc:"emi",ph:"TV EMI",rank:5,hint:"TV, phone, fridge"},
+  card:{label:"Credit card",group:"loan",calc:"card",ph:"HDFC Millennia",rank:6},
+  gold:{label:"Gold loan",group:"loan",calc:"gold",ph:"Gold – T. Nagar",rank:7},
+  settle:{label:"Settlement",group:"loan",calc:"settle",ph:"Axis card settlement",rank:8},
+  hand:{label:"Hand loan",group:"loan",calc:"hand",ph:"From Ravi",rank:9},
+  bills:{label:"Current & bills",group:"pay",ph:"EB current bill",rank:10},
+  other:{label:"Other payment",group:"pay",ph:"Chit fund",rank:11}
+};
+const LOAN_ORDER=["home","personal","app","consumer","card","gold","settle","hand"];
+const PAY_ORDER=["family","rent","bills","other"];
+const ICON={
+  family:'<path d="M12 20s-7-4.4-9-8.5C1.6 8.6 3.4 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.6 0 5.4 3.6 4 6.5C19 15.6 12 20 12 20z"/>',
+  rent:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14.5 8.5l2 2"/>',
+  bills:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  other:'<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  personal:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/>',
+  app:'<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  consumer:'<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  card:'<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/>',
+  gold:'<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3l3 6 3-6"/>',
+  settle:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 14l2 2 4-4"/>',
+  hand:'<path d="M18 11V7a1.5 1.5 0 0 0-3 0v3M15 10V5a1.5 1.5 0 0 0-3 0v5M12 10V6a1.5 1.5 0 0 0-3 0v7l-1.6-1.9a1.6 1.6 0 0 0-2.5 2L8.5 18a6 6 0 0 0 5 3H14a5 5 0 0 0 5-5v-5a1.5 1.5 0 0 0-1-1.4"/>',
+  spend:'<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>'
+};
+const icon=c=>`<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[c]||ICON.other}</svg>`;
+const ck='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const SPEND_CATS=["Food","Groceries","Transport","Shopping","Health","Fun","Other"];
+const KEYWORDS={Food:["swiggy","zomato","lunch","dinner","breakfast","tea","coffee","snack","restaurant","biryani","hotel","dosa","juice","meal","food","cafe"],Groceries:["grocery","groceries","bigbasket","blinkit","zepto","milk","vegetables","veg","fruits","dmart","kirana","rice"],Transport:["uber","ola","rapido","auto","bus","metro","petrol","fuel","diesel","train","cab","parking","toll"],Shopping:["amazon","flipkart","myntra","clothes","shirt","shoes","ajio","meesho","gift"],Health:["medicine","pharmacy","doctor","hospital","gym","apollo","medical","tablet"],Fun:["movie","netflix","prime","hotstar","spotify","game","party","outing","trip","pvr"]};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONF=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const WD=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+/* ================= helpers ================= */
+let HIDE=false;try{HIDE=localStorage.getItem("pz-hide")==="1"}catch(e){}
+const inr=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0});
+const money=v=>HIDE?"₹••••":(isFinite(v)?inr.format(Math.round(v||0)):"∞");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const ym=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const $=id=>document.getElementById(id);
+const ord=n=>n+(n%10===1&&n!==11?"st":n%10===2&&n!==12?"nd":n%10===3&&n!==13?"rd":"th");
+const today0=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
+const curKey=()=>ym(new Date());
+const mkParse=k=>{const [y,m]=k.split("-").map(Number);return {y,m}};
+const mkAdd=(k,n)=>{const {y,m}=mkParse(k);return ym(new Date(y,m-1+n,1))};
+const mkDiff=(a,b)=>{const A=mkParse(a),B=mkParse(b);return (B.y-A.y)*12+(B.m-A.m)};
+const mkDim=k=>{const {y,m}=mkParse(k);return new Date(y,m,0).getDate()};
+const mkLabel=k=>{const {y,m}=mkParse(k);return `${MONF[m-1]} ${y}`};
+const monYrAt=n=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+n);return `${MON[d.getMonth()]} ${d.getFullYear()}`};
+const fdate=s=>{if(!s)return"";const d=new Date(s+"T00:00");return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`};
+const daysTo=s=>Math.round((new Date(s+"T00:00")-today0())/864e5);
+const monthsTxt=n=>{if(!isFinite(n))return "never";const y=Math.floor(n/12),m=n%12;return y?`${y} yr${y>1?"s":""}${m?` ${m} mo`:""}`:`${m} mo`};
+const kc=c=>`--c:var(--k-${c})`;
+
+/* ================= loan maths (reducing balance, monthly rest) ================= */
+const mr=a=>(+a||0)/1200;
+function emiFor(P,apr,n){P=+P;n=+n;if(!(P>0)||!(n>0))return 0;const r=mr(apr);if(!r)return P/n;const f=Math.pow(1+r,n);return P*r*f/(f-1)}
+function balAfter(P,apr,emi,k){if(k<=0)return +P;const r=mr(apr);if(!r)return Math.max(0,P-emi*k);const f=Math.pow(1+r,k);return Math.max(0,P*f-emi*(f-1)/r)}
+function nLeft(B,apr,emi){if(!(B>0.5))return 0;if(!(emi>0))return Infinity;const r=mr(apr);if(!r)return Math.ceil(B/emi-1e-9);if(emi<=B*r)return Infinity;return Math.ceil(-Math.log(1-r*B/emi)/Math.log(1+r)-1e-9)}
+function paidCount(start,n){if(!start)return 0;const s=new Date(start+"T00:00"),t=today0();if(t<s)return 0;const k=(t.getFullYear()-s.getFullYear())*12+(t.getMonth()-s.getMonth())+(t.getDate()>s.getDate()?1:0);return Math.max(0,Math.min(n,k))}
+function prepaySim(B,apr,emi,o={}){
+  const r=mr(apr),m=+o.m||0,q=+o.q||0,once=+o.once||0;let b=+B,months=0,int=0,extra=0;
+  if(once>0){const x=Math.min(once,b);b-=x;extra+=x}
+  while(b>0.5&&months<600){months++;const i=b*r;if(emi<=i&&!m&&!q)return {months:Infinity,int:Infinity,extra,fees:0};
+    int+=i;const pay=Math.min(emi,b+i);b=b+i-pay;let x=m+(months%3===0?q:0);x=Math.min(x,Math.max(0,b));b-=x;extra+=x}
+  return {months:b>0.5?Infinity:months,int,extra,fees:extra*(+o.fee||0)/100}
+}
+function solveFor(B,apr,emi,target,key){if(prepaySim(B,apr,emi).months<=target)return 0;let lo=0,hi=B*3;for(let i=0;i<40;i++){const mid=(lo+hi)/2;if(prepaySim(B,apr,emi,{[key]:mid}).months<=target)hi=mid;else lo=mid}return Math.ceil(hi/100)*100}
+function simulate(debts,budget,strategy,maxMonths,paidNow={}){
+  const ds=debts.filter(d=>d.bal>0.5).map(d=>({...d}));
+  const rows=[],payoff={};let interest=0,m=0;
+  while(m<maxMonths&&ds.some(d=>d.bal>0.5)){
+    m++;let avail=budget;const pays={},first=m===1;
+    if(first)for(const id in paidNow){if(ds.some(d=>d.id===id)){avail-=paidNow[id];pays[id]=paidNow[id]}}
+    ds.forEach(d=>{if(d.bal<=0.5||(first&&paidNow[d.id]))return;const i=d.bal*d.apr/1200;d.bal+=i;interest+=i});
+    ds.forEach(d=>{if(d.bal<=0.5||(first&&paidNow[d.id]))return;const p=Math.min(d.bal,+d.min||0);d.bal-=p;avail-=p;if(p)pays[d.id]=(pays[d.id]||0)+p});
+    const order=ds.filter(d=>d.bal>0.5).sort(strategy==="snowball"?(a,b)=>a.bal-b.bal:(a,b)=>b.apr-a.apr||a.bal-b.bal);
+    for(const d of order){if(avail<=0)break;const p=Math.min(d.bal,avail);d.bal-=p;avail-=p;pays[d.id]=(pays[d.id]||0)+p}
+    ds.forEach(d=>{if(d.bal<=0.5&&!payoff[d.id]){payoff[d.id]=m;d.bal=0}});
+    rows.push({m,pays,focus:order[0]?.id,total:ds.reduce((s,d)=>s+Math.max(0,d.bal),0)});
+  }
+  return {rows,payoff,interest,months:m,cleared:!ds.some(d=>d.bal>0.5)};
+}
+
+/* ================= state ================= */
+function blankState(){return {v:5,example:false,income:0,salaryDay:1,living:0,saveMonthly:0,extra:0,settle:{},settleFund:0,items:[],paid:{},amounts:{},notes:{},oneoff:{},expenses:[],payments:[],goals:[],savelog:[],pinHash:"",pinLen:0}}
+function fromV4(x){
+  const s=blankState();Object.assign(s,{income:x.income||0,salaryDay:x.salaryDay||1,saveMonthly:x.saveMonthly||0,expenses:x.expenses||[],payments:x.payments||[],goals:x.goals||[],savelog:x.savelog||[],paid:x.paid||{},amounts:x.amounts||{},notes:x.notes||{},pinHash:x.pinHash||"",pinLen:x.pinLen||0,example:!!x.example});
+  (x.family||[]).forEach(f=>{const p=f.purpose||"family";s.items.push({id:f.id,cat:p==="family"?"family":/rent/i.test(f.name)?"rent":p==="bills"?"bills":"other",name:f.name,pay:+f.amt||0,day:f.day||1,note:f.note||""})});
+  if(x.fixed>0)s.items.push({id:uid(),cat:"bills",name:"Fixed bills",pay:+x.fixed,day:x.salaryDay||1,note:""});
+  (x.debts||[]).forEach(d=>{const txt=(d.name+" "+(d.lender||"")).toLowerCase(),apr=+d.apr||0,months=+d.left||+d.ten||0;
+    if(/\brent\b/.test(txt)&&(d.kind==="hand"||d.kind==="loan")){s.items.push({id:d.id,cat:"rent",name:d.name,pay:+d.min||0,day:d.day||1,note:""});return}
+    let cat=d.kind==="loan"?((/home|housing/.test(txt)||(apr>0&&apr<=10&&months>=120))?"home":"personal"):d.kind;
+    if(d.kind==="hand"&&/\btv\b|emi/.test(txt))cat="consumer";
+    const it={...d,cat,pay:+d.min||0};delete it.kind;delete it.min;
+    const hasBal=it.bal!=null&&it.bal!=="";
+    if(cat==="card"){it.mode="revolve";if(!it.pay&&hasBal)it.pay=Math.max(200,Math.round(it.bal*0.05))}
+    if(cat==="settle")it.inst=it.pay;
+    if(cat==="consumer"&&hasBal&&it.pay>0){Object.assign(it,{know:"current",cur:it.bal,left:Math.ceil(it.bal/it.pay),rate:apr,apr,next:""})}
+    s.items.push(it)});
+  Object.entries(x.oneoff||{}).forEach(([k,list])=>{s.oneoff[k]=(list||[]).map(o=>({id:o.id,cat:o.purpose==="family"?"family":"other",name:o.name,pay:+o.amt||0,day:o.day||1,note:o.note||""}))});
+  s.living=Math.round((x.income||0)*0.15/1000)*1000;
+  return s;
+}
+function normalize(x){if(!x)return blankState();if(!x.v||x.v<5)return x.example?Object.assign(exampleState(),{pinHash:x.pinHash||"",pinLen:x.pinLen||0}):fromV4(x);const s=Object.assign(blankState(),x);["paid","amounts","notes","oneoff","settle"].forEach(k=>s[k]=s[k]||{});return s}
+function makeEmi(o){const c=computeEmi(o);return {...o,apr:+o.rate||0,pay:Math.round(c.emi),bal:Math.round(c.bal),day:c.day}}
+function computeEmi(f){
+  const rate=+f.rate||0;
+  if(f.know==="current"){const bal=+f.cur||0,left=+f.left||0;if(!(bal>0)||!(left>0))return null;const emi=+f.emiOv||emiFor(bal,rate,left);
+    return {emi,bal,left:f.emiOv?nLeft(bal,rate,emi):left,day:f.next?new Date(f.next+"T00:00").getDate():1,k:null,ten:null}}
+  const P=+f.prin||0,n=+f.ten||0;if(!(P>0)||!(n>0))return null;
+  const emi=+f.emiOv||emiFor(P,rate,n),k=paidCount(f.start,n),bal=k>=n?0:balAfter(P,rate,emi,k);
+  return {emi,bal,left:f.emiOv?nLeft(bal,rate,emi):n-k,day:f.start?new Date(f.start+"T00:00").getDate():1,k,ten:n,totalInt:emi*n-P}
+}
+function exampleState(){
+  const now=new Date(),td=now.getDate(),k=ym(now);
+  const ago=(mo,day)=>ymd(new Date(now.getFullYear(),now.getMonth()-mo,day));
+  const plus=n=>{const d=new Date(now);d.setDate(td+n);return ymd(d)};
+  const s=blankState();Object.assign(s,{example:true,income:170000,salaryDay:1,living:20000,saveMonthly:2000});
+  s.items=[
+    {id:"p1",cat:"family",name:"Parents",pay:20000,day:1,note:""},
+    {id:"p2",cat:"family",name:"Wife – household",pay:10000,day:1,note:""},
+    {id:"p3",cat:"rent",name:"House rent",pay:12000,day:3,note:"incl. maintenance"},
+    {id:"p4",cat:"bills",name:"EB current bill",pay:1800,day:10,note:"",variable:true},
+    makeEmi({id:"l1",cat:"home",name:"SBI Home Loan",lender:"SBI",know:"orig",prin:2500000,ten:240,start:ago(30,5),rate:8.5,fee:0}),
+    makeEmi({id:"l2",cat:"personal",name:"HDFC Personal 1",lender:"HDFC Bank",know:"orig",prin:500000,ten:48,start:ago(14,5),rate:12.5,fee:4}),
+    makeEmi({id:"l3",cat:"personal",name:"ICICI Personal 2",lender:"ICICI Bank",know:"orig",prin:300000,ten:36,start:ago(8,7),rate:13.5,fee:3}),
+    makeEmi({id:"l4",cat:"app",name:"App loan 1",lender:"Loan app",know:"orig",prin:60000,ten:6,start:ago(3,7),rate:30,fee:0}),
+    makeEmi({id:"l5",cat:"consumer",name:"TV EMI",lender:"Bajaj Finserv",know:"orig",prin:48000,ten:12,start:ago(5,2),rate:0,fee:0}),
+    {id:"c1",cat:"card",name:"HDFC card",lender:"HDFC Bank",mode:"revolve",bal:45000,apr:42,pay:2250,day:18},
+    {id:"c2",cat:"card",name:"Amazon ICICI card",lender:"ICICI Bank",mode:"rotate",bal:18000,apr:42,pay:18000,day:15,note:"pay full, reuse"},
+    {id:"g1",cat:"gold",name:"Gold – T. Nagar",lender:"Bank, T. Nagar",items:"Chain, 2 bangles",grams:24,bal:90000,apr:9.5,mode:"monthly",pay:713,day:12,from:plus(-325),to:plus(40)},
+    {id:"s1",cat:"settle",name:"Axis card settlement",lender:"Axis Bank",total:60000,inst:10000,bal:30000,pay:10000,day:25}
+  ];
+  s.paid[k]={};
+  s.items.forEach(it=>{if(it.day<td&&it.pay>0&&it.mode!=="rotate"){s.paid[k][it.id]={amt:it.pay,date:ymd(new Date(now.getFullYear(),now.getMonth(),it.day))};
+    if(it.know==="orig")s.paid[k][it.id].prevBal=Math.round(balAfter(it.prin,it.apr,it.pay,paidCount(it.start,it.ten)-1))}});
+  const ex=[];const pat=[[["Food",220,"Lunch"],["Transport",140,"Auto"]],[["Food",390,"Swiggy dinner"],["Groceries",480,"Milk & veg"]],[["Shopping",699,"Shirt"]],[["Transport",600,"Petrol"],["Food",210,"Lunch"]],[["Fun",350,"Movie"]],[["Groceries",860,"Weekly groceries"]],[["Health",320,"Pharmacy"],["Food",160,"Tea"]]];
+  for(let b=1;b<=7;b++){const d=new Date(now);d.setDate(td-b);pat[b-1].forEach(([c,a,n])=>ex.push({id:uid(),amt:a,cat:c,note:n,date:ymd(d)}))}
+  ex.push({id:uid(),amt:180,cat:"Food",note:"Breakfast",date:ymd(now)});
+  s.expenses=ex;s.goals=[{id:"go1",name:"Emergency fund",target:60000,saved:12000}];
+  return s;
+}
+let S=null;
+try{const raw=localStorage.getItem("purse-zero");if(raw)S=normalize(JSON.parse(raw))}catch(e){console.error("load failed",e)}
+if(!S)S=exampleState();
+
+/* storage */
+let ref=null,saveTimer=null,touched=false,cloud=false;
+const plain=()=>JSON.parse(JSON.stringify(S));
+function setStatus(t){$("topSub").textContent=t;$("dataStatus").textContent=t+(cloud?". Only you can open this app; your phone and laptop see the same data.":".")}
+function save(){touched=true;try{localStorage.setItem("purse-zero",JSON.stringify(S))}catch(e){}
+  if(!ref)return;clearTimeout(saveTimer);setStatus("Saving…");saveTimer=setTimeout(()=>{Promise.resolve().then(()=>ref.set(plain())).then(()=>setStatus("Private · saved to your account")).catch(err=>{setStatus("Not saved. Check your connection");showErr(err)})},250)}
+(async()=>{try{const db=await window.claude?.use?.("db");if(!db){setStatus("Saved on this device");return}
+  ref=db.doc("purse/main");const snap=await ref.get();
+  const got=snap.exists?snap.data():null;if(got){const copy=JSON.parse(JSON.stringify(got));S=normalize(copy);try{localStorage.setItem("purse-zero",JSON.stringify(S))}catch(e){}if(copy.v!==5)ref.set(plain());render();checkLock()}
+  else if(touched||!S.example)await ref.set(plain());
+  cloud=true;setStatus("Private · saved to your account")}catch(e){setStatus("Saved on this device")}})();
+
+/* ================= model ================= */
+const isLoan=it=>CAT[it.cat]?.group==="loan";
+const known=it=>it.bal!=null&&it.bal!=="";
+const loanOpen=it=>isLoan(it)&&(!known(it)||it.bal>0.5);
+const items=()=>S.items;
+function payOf(it){return +it.pay||0}
+function monthsLeftOf(it){
+  if(!isLoan(it))return Infinity;if(!known(it))return Infinity;if(it.bal<=0.5)return 0;
+  const c=CAT[it.cat].calc;
+  if(c==="emi")return prepaySim(it.bal,it.apr,it.pay).months;
+  if(c==="settle")return it.pay>0?Math.ceil(it.bal/it.pay):Infinity;
+  if(c==="card")return it.mode==="rotate"?Infinity:prepaySim(it.bal,it.apr,it.pay).months;
+  if(c==="hand")return it.pay>0?prepaySim(it.bal,it.apr,it.pay).months:Infinity;
+  if(c==="gold")return Infinity;
+  return Infinity;
+}
+/* list of payments for a month */
+function monthItems(mk){
+  const cur=curKey(),off=mkDiff(cur,mk),dim=mkDim(mk),paid=S.paid[mk]||{},over=S.amounts[mk]||{},notes=S.notes[mk]||{},paidCur=S.paid[cur]||{};
+  const {y,m}=mkParse(mk),out=[];
+  const push=(it,id,amt,extra={})=>{const day=Math.min(dim,it.day||1),due=new Date(y,m-1,day),p=paid[id];
+    const dd=Math.round((due-today0())/864e5);
+    out.push({id,item:it,cat:it.cat,name:it.name,amt:Math.round(over[id]??amt),day,due,dd,paid:p||null,note:notes[id]||it.note||"",
+      status:p?"paid":dd<0?"overdue":dd===0?"today":dd<=3?"soon":"upcoming",...extra})};
+  for(const it of items()){
+    if(paid[it.id]){push(it,it.id,paid[it.id].amt);continue}
+    if(!isLoan(it)){if(payOf(it)>0||it.variable)push(it,it.id,payOf(it));continue}
+    if(!loanOpen(it))continue;
+    const c=CAT[it.cat].calc;
+    if(c==="gold"){
+      if(it.mode!=="bullet"&&payOf(it)>0&&off>=0)push(it,it.id,payOf(it));
+      if(it.to&&ym(new Date(it.to+"T00:00"))===mk){const t=new Date(it.to+"T00:00");push({...it,day:t.getDate()},it.id+":renew",it.mode==="bullet"?goldAccrued(it):0,{renew:true,name:`Renew or release · ${it.name}`})}
+      continue}
+    if(payOf(it)<=0)continue;
+    const base=paidCur[it.id]?1:0, k=off-base, left=monthsLeftOf(it);
+    if(off<0){push(it,it.id,payOf(it));continue}
+    if(k>=0&&k<left){let amt=payOf(it);
+      if(c==="emi"&&isFinite(left)&&k===left-1){const b=balAfter(it.bal,it.apr,it.pay,left-1);amt=Math.min(amt,b*(1+mr(it.apr)))}
+      push(it,it.id,amt)}
+  }
+  (S.oneoff[mk]||[]).forEach(o=>push(o,o.id,payOf(o),{oneoff:true}));
+  out.sort((a,b)=>a.day-b.day||(CAT[a.cat]?.rank??20)-(CAT[b.cat]?.rank??20));
+  return out;
+}
+function goldAccrued(it){if(it.mode!=="bullet"||!it.from||!known(it))return 0;return it.bal*it.apr/100*Math.max(0,-daysTo(it.from))/365}
+
+/* plan */
+function planDebts(){return items().filter(it=>loanOpen(it)&&known(it)&&!(it.cat==="card"&&it.mode==="rotate")).map(it=>({id:it.id,cat:it.cat,name:it.name,bal:+it.bal,apr:CAT[it.cat].calc==="settle"?0:+it.apr||0,min:it.cat==="gold"&&it.mode==="bullet"?0:payOf(it)}))}
+function paidNowMap(){const p=S.paid[curKey()]||{},o={};items().forEach(it=>{if(p[it.id]&&isLoan(it))o[it.id]=p[it.id].amt});return o}
+function moneyFlow(){
+  const mk=curKey(),list=monthItems(mk);
+  const nonLoan=items().filter(it=>!isLoan(it)).reduce((s,it)=>s+((S.amounts[mk]||{})[it.id]??payOf(it)),0);
+  const rotate=items().filter(it=>it.cat==="card"&&it.mode==="rotate").reduce((s,it)=>s+payOf(it),0);
+  const loanDues=planDebts().reduce((s,d)=>s+d.min,0);
+  const unknownDues=items().filter(it=>loanOpen(it)&&!known(it)).reduce((s,it)=>s+payOf(it),0);
+  const inc=+S.income||0,living=+S.living||0,sv=+S.saveMonthly||0;
+  const spare=inc-nonLoan-rotate-loanDues-unknownDues-living-sv;
+  return {inc,nonLoan,rotate,loanDues,unknownDues,living,sv,spare,list}
+}
+function freedom(){
+  const debts=planDebts(),pn=paidNowMap(),F=moneyFlow();
+  const mins=debts.reduce((s,d)=>s+d.min,0),total=debts.reduce((s,d)=>s+d.bal,0);
+  if(!debts.length)return {debts,total:0,mins:0,F,none:true};
+  let indepM=0,indepI=0,stuck=[];debts.forEach(d=>{const s=prepaySim(d.bal,d.apr,d.min);if(!isFinite(s.months)){stuck.push(d);return}const mm=(pn[d.id]?1:0)+s.months;indepM=Math.max(indepM,mm);indepI+=s.int});
+  const roll=simulate(debts,mins,"avalanche",600,pn);
+  const spare=Math.max(0,F.spare);
+  const run=b=>{const a=simulate(debts,b,"avalanche",600,pn),s=simulate(debts,b,"snowball",600,pn);return a.interest<=s.interest+1?{best:a,strat:"avalanche",alt:s}:{best:s,strat:"snowball",alt:a}};
+  const rec=run(mins+spare),p5=run(mins+spare+5000),p10=run(mins+spare+10000);
+  return {debts,total,mins,pn,F,spare,indep:{months:indepM,int:indepI,stuck},roll,rec,p5,p10};
+}
+
+/* ================= render ================= */
+const SEL=new Set();let viewMonth=curKey(),mFilter="pending",lSeg="loans",screen="home";
+function render(){
+  $("exampleBar").hidden=!S.example;$("eyeBtn").setAttribute("aria-pressed",HIDE);$("hideToggle").textContent=HIDE?"Turn off":"Turn on";
+  const cur=monthItems(curKey()),urgent=cur.filter(r=>!r.paid&&["overdue","today","soon"].includes(r.status)).length;
+  $("mBadge").hidden=!urgent;$("mBadge").textContent=urgent;
+  [()=>renderHome(cur),renderMonth,renderLoans,renderSettle,renderFree,renderMore,syncSel].forEach(f=>{try{f()}catch(err){showErr(err)}});
+}
+function catBar(list,key){const tot=list.reduce((s,r)=>s+r.amt,0)||1,by={};list.forEach(r=>by[r.cat]=(by[r.cat]||0)+r.amt);
+  return Object.entries(by).sort((a,b)=>(CAT[a[0]]?.rank??20)-(CAT[b[0]]?.rank??20)).map(([c,v])=>`<i style="${kc(c)};background:var(--c);width:${v/tot*100}%"></i>`).join("")}
+function rowHTML(r,showDate){
+  const st=r.paid?`Paid ${new Date(r.paid.date+"T00:00").getDate()} ${MON[new Date(r.paid.date+"T00:00").getMonth()]}`:r.status==="overdue"?`Overdue ${-r.dd}d`:r.status==="today"?"Due today":r.dd<=31?`In ${r.dd} day${r.dd===1?"":"s"}`:`${r.due.getDate()} ${MON[r.due.getMonth()]}`;
+  const meta=[CAT[r.cat]?.label+(r.oneoff?" · once":""),r.item.lender&&r.item.lender!==r.name?r.item.lender:"",showDate?`${ord(r.day)}`:"",r.note?`“${esc(r.note)}”`:""].filter(Boolean).join(" · ");
+  const key=(r.mk||viewMonth)+"|"+r.id,sel=!r.paid&&SEL.has(key);
+  return `<div class="prow ${r.status}${sel?" sel":""}" data-key="${key}" style="${kc(r.cat)}"><span class="ico">${icon(r.cat)}</span>
+    <div class="mid" data-open="${r.id}" data-mk="${r.mk||viewMonth}" role="button" tabindex="0"><b>${esc(r.name)}</b><span class="meta">${meta}</span></div>
+    <div class="amt">${r.renew&&!r.amt?"Renew":money(r.paid?r.paid.amt:r.amt)}<span class="st ${r.status}">${st}</span></div>
+    <button class="chk" type="button" data-check="${r.id}" data-mk="${r.mk||viewMonth}" aria-pressed="${r.paid?true:sel}" aria-label="${r.paid?"Paid. Tap to mark not paid":"Select"}: ${esc(r.name)}">${ck}</button></div>`;
+}
+function renderHome(list){
+  const mk=curKey(),tot=list.reduce((s,r)=>s+(r.paid?r.paid.amt:r.amt),0),pd=list.filter(r=>r.paid).reduce((s,r)=>s+r.paid.amt,0);
+  $("hMonth").textContent=`${mkLabel(mk)} · payments`;
+  $("hLeft").textContent=money(Math.max(0,tot-pd));
+  $("hLeftSub").textContent=tot-pd>0?"still to pay this month":"everything is paid this month";
+  $("hBar").innerHTML=`<i style="width:${tot?pd/tot*100:0}%;background:#3FD883"></i>`;
+  $("hPaid").innerHTML=`Paid <b>${money(pd)}</b> of ${money(tot)}`;
+  $("hCount").innerHTML=`<b>${list.filter(r=>r.paid).length}</b> of ${list.length} done`;
+  const nx=list.find(r=>!r.paid);
+  if($("hNext"))$("hNext").innerHTML=nx?`<span class="ico" style="${kc(nx.cat)}">${icon(nx.cat)}</span><div style="flex:1;min-width:0"><div style="font-weight:800">${esc(nx.name)}</div><div class="tiny" style="color:var(--on-night-2)">${nx.status==="overdue"?`Overdue by ${-nx.dd} days`:nx.status==="today"?"Due today":`Due ${nx.due.getDate()} ${MON[nx.due.getMonth()]}`}</div></div><b style="font-variant-numeric:tabular-nums">${money(nx.amt)}</b>`
+    :`<span style="font-weight:700">All payments for ${MONF[mkParse(mk).m-1]} are done.</span>`;
+  // alerts
+  const al=[],od=list.filter(r=>!r.paid&&r.status==="overdue");
+  if(od.length)al.push(["bad",`<b>${od.length} payment${od.length>1?"s":""} overdue · ${money(od.reduce((s,r)=>s+r.amt,0))}.</b> Tick each one off as you pay. If they are already paid, use the green button.`,"overdue"]);
+  const famDue=list.filter(r=>r.cat==="family"&&!r.paid&&r.dd<=0);
+  if(famDue.length)al.push(["warn",`<b>Family first:</b> ${famDue.map(r=>`${esc(r.name)} ${money(r.amt)}`).join(", ")}.`]);
+  items().filter(it=>it.cat==="gold"&&it.to&&loanOpen(it)).forEach(it=>{const d=daysTo(it.to);if(d<=30)al.push([d<=7?"bad":"gold",`<b>Gold at ${esc(it.lender||it.name)}:</b> ${d<0?`renewal date passed ${-d} days ago`:`renew or release by ${fdate(it.to)} (${d} days)`}${it.items?` · ${esc(it.items)}`:""}${it.grams?` · ${it.grams} g`:""}.`])});
+  const F=moneyFlow();if(S.income&&F.spare<0)al.push(["bad",`<b>Short by ${money(-F.spare)} a month.</b> Your payments, living money and savings are more than your salary. See the Debt‑free tab.`]);
+  if(!S.income)al.push(["info","Add your <b>salary and living money</b> in the Debt‑free tab to unlock the plan and daily limit."]);
+  ALERTS=al;const nAl=al.filter(a=>a[0]!=="info").length;$("bellBadge").hidden=!nAl;$("bellBadge").textContent=nAl;
+  if(!$("sheet").hidden&&$("sheetBody").dataset.view==="alerts")openAlerts();
+  // spend
+  const C=spendCtx(),left=C.limit-C.spentToday,ratio=C.limit?C.spentToday/C.limit:(C.spentToday?2:0);
+  $("spendCard").className="spend"+(left<0?" over":"");
+  $("sLeft").textContent=(left<0?"−":"")+money(Math.abs(left));
+  $("sMeter").style.width=Math.min(100,ratio*100)+"%";
+  $("sSub").textContent=S.living?`Spent ${money(C.spentToday)} of ${money(C.limit)} today · ${money(C.spentMonth)} of ${money(S.living)} this month`:"Set your living money in the Debt‑free tab to get a daily limit.";
+  const fr=freedom();const dfm=fr.none?null:fr.rec.best.months;
+  $("homeTiles").innerHTML=`<button class="tile" type="button" data-go="free"><span class="label">Debt‑free by</span><span class="v" style="color:var(--gold)">${fr.none?"Done":isFinite(dfm)?monYrAt(dfm-1):"—"}</span><span class="tiny muted">${fr.none?"no loans left":`fastest plan · ${money(fr.mins+fr.spare)}/mo`}</span></button>
+    <button class="tile" type="button" data-go="settle"><span class="label">To settle everything</span><span class="v">${money(settleRows().reduce((s,r)=>s+(r.payoff||0),0))}</span><span class="tiny muted">${items().filter(loanOpen).length} loans & cards · tap to plan</span></button>`;
+  const nextList=list.filter(r=>!r.paid).slice(0,5).map(r=>({...r,mk}));
+  $("homeNext").innerHTML=(nextList.length?nextList.map(r=>rowHTML(r,false)).join(""):`<p class="small" style="color:var(--good);font-weight:800">All paid for ${MONF[mkParse(mk).m-1]}.</p>`)+(list.filter(r=>!r.paid).length>5?`<button class="btn ghost wide" type="button" data-go="month" style="margin-top:8px">+${list.filter(r=>!r.paid).length-5} more to pay</button>`:"");
+}
+function renderMonth(){
+  const mk=viewMonth,list=monthItems(mk).map(r=>({...r,mk}));
+  $("mTitle").textContent=mkLabel(mk);
+  $("mToday").hidden=mk===curKey();
+  $("mPrev").disabled=mkDiff(curKey(),mk)<=-2;$("mNext").disabled=mkDiff(curKey(),mk)>=24;
+  const tot=list.reduce((s,r)=>s+(r.paid?r.paid.amt:r.amt),0),pd=list.filter(r=>r.paid).reduce((s,r)=>s+r.paid.amt,0);
+  $("mTotal").textContent=money(tot);
+  $("mBar").innerHTML=catBar(list);
+  $("mPaid").innerHTML=`Paid <b>${money(pd)}</b>`;$("mPend").innerHTML=`Pending <b>${money(tot-pd)}</b> · ${list.filter(r=>!r.paid).length} left`;
+  const cats=[...new Set(list.map(r=>r.cat))].sort((a,b)=>(CAT[a]?.rank??20)-(CAT[b]?.rank??20));
+  $("mLegend").innerHTML=cats.map(c=>`<span style="${kc(c)}"><i></i>${CAT[c].label}</span>`).join("");
+  const counts={all:list.length,pending:list.filter(r=>!r.paid).length,paid:list.filter(r=>r.paid).length};
+  $("mFilter").innerHTML=[["pending","To pay"],["paid","Paid"],["all","All"]].map(([k,l])=>`<button class="chip" type="button" data-mf="${k}" aria-pressed="${mFilter===k}">${l} ${counts[k]}</button>`).join("");
+  const shown=list.filter(r=>mFilter==="all"||(mFilter==="paid")===!!r.paid);
+  const groups={};shown.forEach(r=>(groups[r.day]=groups[r.day]||[]).push(r));
+  const tk=ymd(today0());
+  const hint=mFilter==="pending"&&shown.length?`<div class="selhint"><span>Tick the ones you've paid, then tap “Mark paid”.</span><button class="linkbtn" type="button" id="selAll">Select all</button></div>`:"";
+  $("mList").innerHTML=(shown.length?hint:"")+(shown.length?Object.entries(groups).sort((a,b)=>a[0]-b[0]).map(([d,rs])=>{const dt=rs[0].due;const isT=ymd(dt)===tk;
+    return `<div class="dgrp${isT?" today":""}"><b>${dt.getDate()} ${MON[dt.getMonth()]} · ${WD[dt.getDay()]}${isT?" · Today":""}</b><span>${money(rs.reduce((s,r)=>s+(r.paid?r.paid.amt:r.amt),0))}</span></div>`+rs.map(r=>rowHTML(r,false)).join("")}).join("")
+    :`<p class="small ${mFilter==="pending"&&list.length?"":"muted"}" style="${mFilter==="pending"&&list.length?"color:var(--good);font-weight:800":""}">${mFilter==="pending"&&list.length?`Everything for ${MONF[mkParse(mk).m-1]} is paid. 🎉`.replace(" 🎉",""):list.length?"Nothing here for this filter.":"No payments yet. Tap ＋ to add rent, family money, loans or cards."}</p>`);
+  $("selAll")?.addEventListener("click",()=>{shown.forEach(r=>SEL.add(mk+"|"+r.id));syncSel()});
+}
+function loanCardHTML(it){
+  const c=CAT[it.cat].calc,left=monthsLeftOf(it);let meta=it.lender||"",prog="",right=known(it)?money(it.bal):"Add balance",sub=it.bal<=0.5&&known(it)?"closed":"outstanding";
+  if(c==="emi"&&known(it)){const tot=it.ten||(it.know==="orig"?it.ten:null);const done=it.prin?Math.max(0,1-it.bal/it.prin):0;
+    meta=[it.lender,`EMI ${money(it.pay)} · ${ord(it.day)}`].filter(Boolean).join(" · ");
+    prog=`<div class="prog"><div class="meter"><i style="width:${done*100}%"></i></div><div class="tiny"><span>${it.prin?`${Math.round(done*100)}% repaid`:`${it.apr}% interest`}</span><span>${isFinite(left)?`${left} EMIs left · ends ${closeOn(it,left)}`:"never closes at this EMI"}</span></div></div>`}
+  else if(c==="card"){meta=[it.lender,it.mode==="rotate"?`Pay full & reuse · ${money(it.pay)} on ${ord(it.day)}`:`Min due ${money(it.pay)} · ${ord(it.day)}`].filter(Boolean).join(" · ");
+    if(it.mode!=="rotate")prog=`<div class="prog"><div class="tiny"><span>${it.apr}% · ${money(it.bal*mr(it.apr))} interest a month</span><span>${isFinite(left)?`min due clears in ${monthsTxt(left)}`:"min due never clears it"}</span></div></div>`;
+    else{right=money(it.pay);sub="every month"}}
+  else if(c==="gold"){const d=it.to?daysTo(it.to):null;meta=[it.items,it.grams?`${HIDE?"••":it.grams} g`:"",it.lender].filter(Boolean).join(" · ");
+    prog=`<div class="prog"><div class="tiny"><span>${it.apr}% · ${it.mode==="bullet"?"interest at the end":`${money(it.pay)} interest monthly`}</span>${d!=null?`<span class="pill ${d<=7?"bad":d<=30?"warn":"gold"}">${d<0?"Renewal overdue":`Renew by ${fdate(it.to)}`}</span>`:""}</div></div>`}
+  else if(c==="settle"){const done=it.total?1-it.bal/it.total:0;meta=[it.lender,it.pay?`${money(it.pay)} on ${ord(it.day)}`:"no instalment set · tap to add"].filter(Boolean).join(" · ");
+    prog=`<div class="prog"><div class="meter"><i style="width:${done*100}%"></i></div><div class="tiny"><span>${it.total?`${money(it.total-it.bal)} of ${money(it.total)} paid`:""}</span><span>${isFinite(left)?`${left} instalments left`:""}</span></div></div>`}
+  else if(c==="hand"){meta=[it.lender,it.pay?`${money(it.pay)}/month`:"no fixed payment"].filter(Boolean).join(" · ")}
+  return `<button type="button" class="lcard${it.cat==="gold"?" goldy":""}" style="${kc(it.cat)}" data-loan="${it.id}"><span class="ico">${icon(it.cat)}</span><span style="min-width:0"><b>${esc(it.name)}</b><span class="meta">${esc(meta)}</span></span><span class="bal">${right}<small>${sub}</small></span>${prog}</button>`;
+}
+function renderLoans(){
+  document.querySelectorAll("[data-lseg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lseg===lSeg));
+  if(lSeg==="loans"){
+    const open=items().filter(it=>isLoan(it)),act=open.filter(loanOpen);
+    const owed=act.filter(known).filter(it=>!(it.cat==="card"&&it.mode==="rotate")).reduce((s,it)=>s+(+it.bal||0),0);
+    const emis=act.reduce((s,it)=>s+(it.cat==="gold"&&it.mode==="bullet"?0:payOf(it)),0);
+    const intm=act.filter(known).filter(it=>!(it.cat==="card"&&it.mode==="rotate")).reduce((s,it)=>s+(+it.bal||0)*mr(it.apr),0);
+    const grams=act.filter(it=>it.cat==="gold").reduce((s,it)=>s+(+it.grams||0),0);
+    $("lTiles").innerHTML=[["Total owed",money(owed),`${act.length} active`],["Monthly EMIs & dues",money(emis),S.income?`${Math.round(emis/S.income*100)}% of salary`:""],["Interest each month",money(intm),"what debt costs you"],["Gold pledged",grams?`${HIDE?"••":grams} g`:"None",`${act.filter(it=>it.cat==="gold").length} place(s)`]].map(([l,v,s],i)=>`<div class="tile"><span class="label">${l}</span><span class="v"${i===3?' style="color:var(--gold)"':""}>${v}</span><span class="tiny muted">${s}</span></div>`).join("");
+    $("lList").innerHTML=LOAN_ORDER.map(c=>{const g=open.filter(it=>it.cat===c);if(!g.length)return"";
+      return `<div class="ghead" style="${kc(c)}">${CAT[c].label}s<span>${money(g.filter(known).filter(it=>!(it.mode==="rotate")).reduce((s,it)=>s+(+it.bal||0),0))}</span></div>`+g.map(loanCardHTML).join("")}).join("")
+      ||`<div class="card"><p class="muted small">No loans yet. Tap ＋ and pick Home loan, Personal loan, App loan, Product EMI, Credit card, Gold loan, Settlement or Hand loan.</p></div>`;
+  }else{
+    const ps=items().filter(it=>!isLoan(it));const tot=ps.reduce((s,it)=>s+payOf(it),0);
+    $("lTiles").innerHTML=[["Every month",money(tot),`${ps.length} payments`],["Family",money(ps.filter(it=>it.cat==="family").reduce((s,it)=>s+payOf(it),0)),"always paid first"]].map(([l,v,s])=>`<div class="tile"><span class="label">${l}</span><span class="v">${v}</span><span class="tiny muted">${s}</span></div>`).join("");
+    $("lList").innerHTML=PAY_ORDER.map(c=>{const g=ps.filter(it=>it.cat===c);if(!g.length)return"";
+      return `<div class="ghead" style="${kc(c)}">${CAT[c].label}<span>${money(g.reduce((s,it)=>s+payOf(it),0))}/mo</span></div>`+g.map(it=>`<button type="button" class="lcard" style="${kc(c)}" data-pay="${it.id}"><span class="ico">${icon(c)}</span><span style="min-width:0"><b>${esc(it.name)}</b><span class="meta">${ord(it.day)} of every month${it.variable?" · amount changes":""}${it.note?` · “${esc(it.note)}”`:""}</span></span><span class="bal">${money(it.pay)}<small>${it.variable?"usually":"per month"}</small></span></button>`).join("")}).join("")
+      ||`<div class="card"><p class="muted small">Tap ＋ to add family money, rent, current bill or any other monthly payment.</p></div>`;
+  }
+}
+function closeOn(it,months){if(!isFinite(months))return "never";if(months<=0)return "now";const paidCur=(S.paid[curKey()]||{})[it.id];return monYrAt((paidCur?1:0)+months-1)}
+
+function renderFree(){
+  const set=(id,v)=>{if(document.activeElement?.id!==id)$(id).value=v||""};
+  set("pIncome",S.income);set("pSalDay",S.salaryDay);set("pLiving",S.living);set("pSave",S.saveMonthly);
+  if(document.activeElement?.id!=="xAmt")$("xAmt").value=S.extra||"";
+  const fr=freedom(),F=fr.F;
+  $("fMoney").innerHTML=[["Salary",F.inc,""],["Family, rent, bills",-F.nonLoan,""],["Loan EMIs & dues",-(F.loanDues+F.unknownDues),""],F.rotate?["Card bills you reuse",-F.rotate,""]:null,["Living money",-F.living,""],["Savings",-F.sv,""],["Spare for debt",F.spare,"good"]].filter(Boolean)
+    .map(([l,v,c])=>`<div class="item"><span class="t" style="${c?"font-weight:800":""}">${l}</span><span class="num" style="font-weight:800;${c?`color:var(--${F.spare<0?"bad":"good"})`:""}">${v<0?"− ":""}${money(Math.abs(v))}</span><span></span></div>`).join("");
+  const al=[];
+  if(F.rotate)al.push(["warn",`<b>${money(F.rotate)} of card spending is borrowed again every month.</b> It isn't counted as debt here, but it locks that money. Cut it by ₹2–3k each month until you can stop reusing the card.`]);
+  if(F.unknownDues)al.push(["warn","Some loans have no outstanding amount yet, so the plan can't include them. Open them in Loans and add it."]);
+  if(S.income&&F.spare<0)al.push(["bad",`<b>Short by ${money(-F.spare)} a month.</b> Lower living money or savings, or the plan just pays EMIs.`]);
+  $("fAlerts").innerHTML=al.map(([c,t])=>`<div class="alert ${c}"><span class="dot"></span><span>${t}</span></div>`).join("");
+  if(fr.none){$("fWhen").textContent="Debt‑free";$("fSub").textContent="No loans or cards with a balance.";$("fRow").innerHTML="";$("fScn").innerHTML="";$("fOrder").innerHTML="";$("fOrderSub").textContent="";$("fLoad").innerHTML="";$("fDrops").innerHTML="";$("fLoadLeg").innerHTML="";$("xOut").innerHTML="";return}
+  const R=fr.rec.best;
+  $("fWhen").textContent=isFinite(R.months)&&R.cleared?monYrAt(R.months-1):"Not with these numbers";
+  $("fSub").textContent=R.cleared?`in ${monthsTxt(R.months)} · paying ${money(fr.mins+fr.spare)} a month to loans`:"Payments don't cover interest. Raise what goes to debt.";
+  $("fRow").innerHTML=`<span>Debt today <b>${money(fr.total)}</b></span><span>Interest ahead <b>${money(R.interest)}</b></span>`;
+  const sc=[["Only EMIs, nothing extra",fr.indep.months,fr.indep.int,fr.indep.stuck.length?`Each loan runs to its end. ${fr.indep.stuck.map(d=>esc(d.name)).join(", ")} never close${fr.indep.stuck.length>1?"":"s"} this way (interest‑only or min due).`:"Each loan runs to its own end date.",""],
+    ["Roll each closed EMI into the next loan",fr.roll.months,fr.roll.interest,"Same monthly amount; when a loan ends, its EMI goes to the next one.",""],
+    [`+ your spare ${money(fr.spare)}/month`,R.months,R.interest,`${fr.rec.strat==="avalanche"?"Highest interest first":"Smallest balance first"} · cheapest order for you`,"rec"],
+    [`+ ₹5,000 more a month`,fr.p5.best.months,fr.p5.best.interest,"Cut living money or savings a little.",""],
+    [`+ ₹10,000 more a month`,fr.p10.best.months,fr.p10.best.interest,"Fastest realistic option.",""]];
+  const baseI=fr.indep.int;
+  $("fScn").innerHTML=sc.map(([l,m,i,d,c])=>`<div class="scn ${c}"><b>${l}</b><span class="when">${isFinite(m)?monYrAt(m-1):"never"}</span><span class="d">${monthsTxt(m)} · interest ${money(i)}${isFinite(baseI)&&baseI-i>1?` · saves <b style="color:var(--good)">${money(baseI-i)}</b>`:""} · ${d}</span></div>`).join("");
+  const order=fr.debts.map(d=>({d,m:R.payoff[d.id]})).sort((a,b)=>(a.m||1e9)-(b.m||1e9));
+  $("fOrderSub").textContent=fr.rec.strat==="avalanche"?"Costliest interest is attacked first; freed EMIs roll into the next.":"Smallest balances go first for quick wins; it costs about the same here.";
+  $("fOrder").innerHTML=order.map((o,i)=>`<div class="tli" style="${kc(o.d.cat)}"><span class="dt"></span><span><b>${esc(o.d.name)}</b><span class="tiny muted" style="display:block">${CAT[o.d.cat].label} · ${o.d.apr}% · ${money(o.d.bal)}${i===0?" · <b style='color:var(--blue)'>pay extra here now</b>":""}${o.d.min?` · frees ${money(o.d.min)}/mo`:""}</span></span><span class="when">${o.m?monYrAt(o.m-1):"—"}</span></div>`).join("");
+  // load chart (EMIs only, no rollover)
+  const N=36,byCat={},drops=[];
+  fr.debts.forEach(d=>{const it=items().find(x=>x.id===d.id),m=(fr.pn[d.id]?1:0)+prepaySim(d.bal,d.apr,d.min).months;byCat[d.cat]=byCat[d.cat]||[];byCat[d.cat].push({min:d.min,end:m,start:fr.pn[d.id]?1:0});if(isFinite(m)&&m<=N&&d.min)drops.push({m,name:d.name,min:d.min,cat:d.cat})});
+  const series=[];for(let m=0;m<N;m++){const o={};let t=0;Object.entries(byCat).forEach(([c,ls])=>{const v=ls.reduce((s,l)=>s+(m<l.end?l.min:0),0);o[c]=v;t+=v});series.push({o,t})}
+  const W=420,H=210,L=44,Rr=6,T=10,B=24,max=Math.max(...series.map(s=>s.t),1),bw=(W-L-Rr)/N,y=v=>T+(H-T-B)*(1-v/max);
+  let g="";[0,.5,1].forEach(f=>g+=`<line x1="${L}" x2="${W-Rr}" y1="${y(max*f)}" y2="${y(max*f)}" stroke="var(--line)"/><text x="${L-5}" y="${y(max*f)+4}" text-anchor="end">${HIDE?"":max*f>=1000?Math.round(max*f/1000)+"k":Math.round(max*f)}</text>`);
+  const cats=LOAN_ORDER.filter(c=>byCat[c]);
+  series.forEach((s,i)=>{let acc=0;cats.forEach(c=>{const v=s.o[c]||0;if(!v)return;g+=`<rect x="${L+i*bw+1}" y="${y(acc+v)}" width="${Math.max(1,bw-2)}" height="${Math.max(0,y(acc)-y(acc+v))}" fill="var(--k-${c})"/>`;acc+=v})});
+  for(let i=0;i<N;i+=6)g+=`<text x="${L+i*bw+bw/2}" y="${H-7}" text-anchor="middle">${monYrAt(i).replace(" 20"," ’")}</text>`;
+  $("fLoad").innerHTML=g;
+  $("fLoadLeg").innerHTML=cats.map(c=>`<span style="${kc(c)}"><i></i>${CAT[c].label}</span>`).join("");
+  drops.sort((a,b)=>a.m-b.m);
+  $("fDrops").innerHTML=drops.slice(0,6).map(d=>`<div class="item"><span class="t"><b>From ${monYrAt(d.m)}</b> <span class="small muted">· ${esc(d.name)} done</span></span><span class="num" style="color:var(--good);font-weight:800">−${money(d.min)}/mo</span><span></span></div>`).join("");
+  renderBonus(fr);
+}
+function renderBonus(fr){
+  const E=+S.extra||0,out=$("xOut");if(!(E>0)){out.innerHTML=`<p class="small muted">Enter an amount. It's sent to the costliest debt first, after foreclosure charges, and you see what it saves.</p>`;return}
+  const ds=fr.debts.map(d=>({...d,fee:+(items().find(x=>x.id===d.id)?.fee||0)}));let rem=E,fees=0;const steps=[];
+  for(const d of [...ds].sort((a,b)=>b.apr-a.apr||a.bal-b.bal)){if(rem<1)break;if(!d.apr&&d.cat!=="settle")continue;const f=d.fee/100,close=d.bal*(1+f);
+    if(rem>=close){steps.push({d,pay:close,fee:d.bal*f,closes:true});fees+=d.bal*f;rem-=close;d.bal=0}else{const pr=rem/(1+f);steps.push({d,pay:rem,fee:rem-pr,closes:false,pr});fees+=rem-pr;d.bal-=pr;rem=0}}
+  const b=fr.mins+fr.spare,before=simulate(fr.debts,b,fr.rec.strat,600,fr.pn),after=simulate(ds,b,fr.rec.strat,600,fr.pn);
+  const saved=before.interest-after.interest-fees;
+  out.innerHTML=steps.map(s=>`<div class="alert ${s.closes?"good":"info"}"><span class="dot"></span><span><b>${s.closes?(s.d.cat==="gold"?"Release":"Close"):"Part‑pay"} ${esc(s.d.name)}: ${money(s.pay)}</b> · ${s.d.apr}%${s.fee>0?` · incl. ${money(s.fee)} charges`:""}${s.closes&&s.d.min?` · frees ${money(s.d.min)}/month`:""}</span></div>`).join("")
+    +`<div class="tiles"><div class="tile"><span class="label">Interest saved</span><span class="v" style="color:var(--good)">${money(Math.max(0,saved))}</span></div><div class="tile"><span class="label">Debt‑free</span><span class="v">${before.months>after.months?`${monthsTxt(before.months-after.months)} sooner`:"same"}</span></div></div>`
+    +`<button class="btn dark" type="button" id="xApply">I've paid these · update balances</button>`;
+  $("xApply").onclick=()=>askConfirm(`Update balances for ${steps.length} payment${steps.length>1?"s":""}?`,()=>{const t=ymd(new Date());steps.forEach(s=>{const it=items().find(x=>x.id===s.d.id);it.bal=s.closes?0:Math.max(0,Math.round(it.bal-s.pr));S.payments.push({id:uid(),itemId:it.id,amt:Math.round(s.pay),date:t,kind:"prepay"})});S.extra=0;leaveExample();save();render();toast("Balances updated")});
+}
+
+/* spending */
+function spendCtx(){const now=new Date(),t=ymd(now),mk=curKey(),dim=mkDim(mk),dl=dim-now.getDate()+1;
+  const mon=S.expenses.filter(e=>e.date.startsWith(mk)),spentMonth=mon.reduce((s,e)=>s+e.amt,0),before=mon.filter(e=>e.date<t).reduce((s,e)=>s+e.amt,0),spentToday=S.expenses.filter(e=>e.date===t).reduce((s,e)=>s+e.amt,0);
+  return {limit:Math.max(0,((+S.living||0)-before)/dl),spentToday,spentMonth,mon,today:t}}
+let oSeg="spend";
+function renderMore(){
+  document.querySelectorAll("[data-oseg]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.oseg===oSeg));document.querySelectorAll("[data-opart]").forEach(p=>p.hidden=p.dataset.opart!==oSeg);
+  const C=spendCtx();$("spTitle").textContent=`${mkLabel(curKey())} · ${money(C.spentMonth)} of ${money(S.living)}`;
+  const by={};C.mon.forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amt);const arr=Object.entries(by).sort((a,b)=>b[1]-a[1]),mx=arr[0]?.[1]||1;
+  $("catBars").innerHTML=arr.length?arr.map(([c,v])=>`<div class="cbar"><span>${esc(c)}</span><span class="track"><i style="width:${v/mx*100}%"></i></span><span class="num">${money(v)}</span></div>`).join(""):`<p class="small muted">No spends yet this month.</p>`;
+  $("spList").innerHTML=[...C.mon].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const d=new Date(e.date+"T00:00");return `<div class="item"><div class="t"><span class="cat">${esc(e.cat)} · ${d.getDate()} ${MON[d.getMonth()]}</span><div>${esc(e.note||e.cat)}</div></div><span class="num" style="font-weight:700">${money(e.amt)}</span><button class="x" type="button" data-delexp="${e.id}" aria-label="Delete">×</button></div>`}).join("")||`<p class="small muted">Use the box on Home: type “450 swiggy”.</p>`;
+  const tot=S.goals.reduce((s,g)=>s+g.saved,0);
+  $("sTiles").innerHTML=`<div class="tile"><span class="label">Total saved</span><span class="v" style="color:var(--good)">${money(tot)}</span></div><div class="tile"><span class="label">Planned monthly</span><span class="v">${money(S.saveMonthly)}</span></div>`;
+  $("goalList").innerHTML=S.goals.map(g=>{const p=Math.min(100,g.saved/g.target*100);return `<div class="card"><div class="head"><b>${esc(g.name)}</b><span class="num" style="font-weight:800">${money(g.saved)} <span class="muted small">of ${money(g.target)}</span></span></div><div class="meter"><i style="width:${p}%"></i></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="number" min="1" placeholder="₹" id="ga-${g.id}" style="width:120px;flex:none;padding:8px 10px" inputmode="numeric" aria-label="Amount"><button class="btn sm" type="button" data-gadd="${g.id}">Add</button><button class="btn sm ghost" type="button" data-gout="${g.id}">Withdraw</button><button class="x" type="button" data-gdel="${g.id}" aria-label="Remove goal">×</button></div></div>`}).join("")||`<div class="card"><p class="small muted">Start with an emergency fund: about one month of family money and rent.</p></div>`;
+  $("pinStatus").textContent=S.pinHash?"PIN is on. Set a new one to change it.":"No PIN yet.";$("pinRemove").hidden=!S.pinHash;
+}
+
+/* ================= settle & foreclose ================= */
+let stFilter="all";const stOpen=new Set();
+/* what it costs to close a debt today */
+function payoffOf(it){
+  if(!known(it))return null;const c=CAT[it.cat].calc;
+  if(c==="card")return it.mode==="rotate"?+it.pay||0:+it.bal;
+  if(c==="emi")return it.bal*(1+(+it.fee||0)/100);
+  if(c==="gold")return +it.bal+goldAccrued(it);
+  return +it.bal}
+function interestAvoided(it){if(!known(it)||!(it.apr>0))return 0;const c=CAT[it.cat].calc;
+  if(c==="gold")return it.bal*it.apr/100;                       // a year of gold interest
+  if(c==="card"&&it.mode==="rotate")return 0;
+  const sim=prepaySim(it.bal,it.apr,it.pay||0);return isFinite(sim.int)?sim.int:it.bal*it.apr/100*3}
+function freedOf(it){return (it.cat==="gold"&&it.mode==="bullet")||(it.cat==="card"&&it.mode==="rotate")?0:+it.pay||0}
+function settleRows(){
+  return items().filter(it=>isLoan(it)&&(!known(it)||it.bal>0.5)).map(it=>{const st=S.settle[it.id]||{},pay=payoffOf(it);
+    return {it,id:it.id,cat:it.cat,payoff:pay,amt:st.amt!=null&&st.amt!==""?+st.amt:pay,on:!!st.on,by:st.by||"",note:st.note||"",avoid:interestAvoided(it),freed:freedOf(it)}})}
+/* smart order: costliest money first, then smallest to close; cheap home loans last */
+function smartScore(r){const it=r.it;if(it.cat==="card"&&it.mode==="rotate")return -100;return (it.cat==="home"?-50:0)+(+it.apr||0)+(r.freed&&r.amt?Math.min(20,r.freed/r.amt*100):0)}
+function renderSettle(){
+  const rows=settleRows(),known_=rows.filter(r=>r.payoff!=null),miss=rows.filter(r=>r.payoff==null);
+  const total=known_.reduce((s,r)=>s+r.payoff,0),princ=known_.reduce((s,r)=>s+(r.it.cat==="card"&&r.it.mode==="rotate"?r.payoff:+r.it.bal),0);
+  const fees=total-princ,plan=rows.filter(r=>r.on),planAmt=plan.reduce((s,r)=>s+(r.amt||0),0);
+  $("stTotal").textContent=money(total);
+  $("stSub").textContent=`${known_.length} loans & cards · principal ${money(princ)}${fees>1?` + ${money(fees)} fees & interest due`:""}`;
+  $("stBar").innerHTML=known_.length?Object.entries(known_.reduce((a,r)=>(a[r.cat]=(a[r.cat]||0)+r.payoff,a),{})).sort((a,b)=>(CAT[a[0]].rank)-(CAT[b[0]].rank)).map(([c,v])=>`<i style="background:var(--k-${c});width:${v/(total||1)*100}%"></i>`).join(""):"";
+  const emiAll=rows.reduce((s,r)=>s+r.freed,0);
+  $("stRow").innerHTML=`<span>EMIs & dues gone <b>${money(emiAll)}/mo</b></span><span>Planned <b>${money(planAmt)}</b></span>`;
+  $("stMiss").innerHTML=miss.length?`<div class="alert warn"><span class="dot"></span><span><b>${miss.length} without an outstanding amount:</b> ${miss.map(r=>esc(r.it.name)).join(", ")}. Tap them below to add it, so the total is complete.</span></div>`:"";
+  // breakdown
+  const by={};rows.forEach(r=>{const b=by[r.cat]=by[r.cat]||{n:0,v:0};b.n++;b.v+=r.payoff||0});
+  $("stBreak").innerHTML=LOAN_ORDER.filter(c=>by[c]).map(c=>{const open=stOpen.has(c),g=rows.filter(r=>r.cat===c);
+    return `<div class="bgrp${open?" open":""}" style="${kc(c)}"><button type="button" class="bhead" data-bopen="${c}" aria-expanded="${open}"><i></i><span>${CAT[c].label}${by[c].n>1?`s · ${by[c].n}`:""}</span><b>${money(by[c].v)}</b><span class="chev">${open?"▴":"▾"}</span></button>
+      ${open?`<div class="bbody">${g.map(r=>{const it=r.it,c2=CAT[it.cat].calc,rot=it.cat==="card"&&it.mode==="rotate";
+        const extra=r.payoff!=null&&!rot&&Math.abs(r.payoff-it.bal)>1?`<span class="tiny muted">+ ${money(r.payoff-it.bal)} ${c2==="gold"?"interest built up":"foreclosure fee"} = ${money(r.payoff)}</span>`:"";
+        return `<div class="bitem"><div style="min-width:0"><b>${esc(it.name)}</b><span class="tiny muted" style="display:block">${rot?"current bill (pay full & reuse)":c2==="emi"?`outstanding · EMI ${money(it.pay)}`:c2==="card"?"card outstanding":c2==="gold"?"gold loan principal":c2==="settle"?"still to pay":"amount owed"}</span>${extra}</div>
+          <label class="bin"><span>₹</span><input type="number" min="0" step="1" inputmode="numeric" value="${known(it)?Math.round(rot?it.pay:it.bal):""}" placeholder="enter" data-bedit="${it.id}" aria-label="Outstanding for ${esc(it.name)}"></label></div>`}).join("")}
+        <p class="tiny muted">Changing a number here updates that loan everywhere: EMIs left, closing date, debt‑free plan and settle total.</p></div>`:""}</div>`}).join("")
+    +`<div class="btot"><span>Total to settle</span><b>${money(total)}</b></div>`;
+  // plan
+  const pAvoid=plan.reduce((s,r)=>s+r.avoid,0),pFreed=plan.reduce((s,r)=>s+r.freed,0),pDisc=plan.reduce((s,r)=>s+Math.max(0,(r.payoff||0)-(r.amt||0)),0);
+  $("stPlanPill").textContent=`${plan.length} planned`;
+  $("stPlanFacts").innerHTML=plan.length?[["Needed",money(planAmt)],["EMIs freed",money(pFreed)+"/mo"],["Interest avoided",money(pAvoid)],pDisc>1?["Saved by settling",money(pDisc)]:null].filter(Boolean).map(([l,v])=>`<div class="fact"><span>${l}</span><b>${v}</b></div>`).join("")
+    :`<p class="small muted" style="grid-column:1/-1">Tick the debts you want to close below, or tap “Tick best 3”.</p>`;
+  if(document.activeElement?.id!=="stFund")$("stFund").value=S.settleFund||"";
+  const fund=+S.settleFund||0;
+  if(plan.length&&fund>0){let left=fund;const order=[...plan].sort((a,b)=>(a.by||"9999").localeCompare(b.by||"9999")||smartScore(b)-smartScore(a));
+    const lines=order.map(r=>{const ok=r.amt!=null&&left>=r.amt;if(ok)left-=r.amt;return `<div><span class="${ok?"ok":"no"}">${ok?"✓":"·"} ${esc(r.it.name)}</span><span class="${ok?"ok":"no"}">${money(r.amt)}</span></div>`}).join("");
+    const gap=planAmt-fund;
+    $("stCover").innerHTML=`<div class="cov">${lines}</div><div class="alert ${gap>0?"warn":"good"}" style="margin-top:8px"><span class="dot"></span><span>${gap>0?`<b>${money(fund)}</b> closes the ticked ones above. You still need <b>${money(gap)}</b> for the rest.`:`<b>${money(fund)}</b> covers your whole plan${-gap>1?` with ${money(-gap)} left over`:""}.`}</span></div>`}
+  else $("stCover").innerHTML=plan.length?`<p class="small muted">Enter the money you can arrange to see what it closes first.</p>`:"";
+  // chips
+  const cats=LOAN_ORDER.filter(c=>by[c]);
+  $("stChips").innerHTML=[["all",`All ${rows.length}`],["plan",`Planned ${plan.length}`],...cats.map(c=>[c,CAT[c].label])].map(([k,l])=>`<button class="chip" type="button" data-stf="${k}" aria-pressed="${stFilter===k}">${k!=="all"&&k!=="plan"?`<span class="dot" style="${kc(k)}"></span>`:""}${l}</button>`).join("");
+  let shown=rows.filter(r=>stFilter==="all"||(stFilter==="plan"?r.on:r.cat===stFilter));
+  shown.sort((a,b)=>(b.on-a.on)||(smartScore(b)-smartScore(a)));
+  $("stList").innerHTML=shown.length?shown.map(r=>{const it=r.it,disc=r.payoff!=null&&r.amt<r.payoff-1;
+    const meta=[CAT[it.cat].label,it.apr?`${it.apr}%`:"",r.freed?`frees ${money(r.freed)}/mo`:"",r.by?`by ${monthNameShort(r.by)}`:""].filter(Boolean).join(" · ");
+    return `<div class="srow${r.on?" on":""}${r.payoff==null?" miss":""}" style="${kc(it.cat)}"><span class="ico">${icon(it.cat)}</span>
+      <div class="mid" data-stopen="${it.id}" role="button" tabindex="0"><b>${esc(it.name)}</b><span class="meta">${meta}</span></div>
+      <div class="amt">${r.payoff==null?"Add amount":money(r.amt)}${disc?`<s>${money(r.payoff)}</s>`:r.avoid>1?`<small>saves ${money(r.avoid)}</small>`:""}</div>
+      <button class="chk" type="button" data-sttick="${it.id}" aria-pressed="${r.on}" aria-label="${r.on?"Remove from plan":"Add to plan"}: ${esc(it.name)}">${ck}</button></div>`}).join("")
+    :`<p class="small muted">Nothing here.</p>`;
+  // history
+  const done=S.payments.filter(p=>p.kind==="settle").slice(-10).reverse();
+  $("stDoneCard").hidden=!done.length;
+  $("stDone").innerHTML=done.map(p=>{const it=items().find(x=>x.id===p.itemId);const d=new Date(p.date+"T00:00");return `<div class="item"><div class="t"><span class="cat">${CAT[it?.cat]?.label||"Loan"} · ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}</span><div style="font-weight:700">${esc(it?.name||"Closed loan")}</div></div><span class="num" style="font-weight:800;color:var(--good)">${money(p.amt)}</span><button class="linkbtn" type="button" data-stundo="${p.id}">Undo</button></div>`}).join("");
+}
+const monthNameShort=k=>{const {y,m}=mkParse(k);return `${MON[m-1]} ${String(y).slice(2)}`};
+function setPlan(id,patch){S.settle[id]={...(S.settle[id]||{}),...patch};leaveExample();save();render()}
+function openSettle(id){
+  const it=items().find(x=>x.id===id);if(!it)return;const r=settleRows().find(x=>x.id===id);const c=CAT[it.cat].calc;
+  if(r.payoff==null){itemForm(it.cat,it);toast("Add the outstanding amount first");return}
+  const facts=[["Principal left",money(c==="card"&&it.mode==="rotate"?r.payoff:it.bal)],c==="emi"&&+it.fee?["Foreclosure fee",`${it.fee}% · ${money(it.bal*it.fee/100)}`]:null,c==="gold"&&goldAccrued(it)>1?["Interest built up",money(goldAccrued(it))]:null,["Pay to close today",money(r.payoff)],r.freed?["EMI / due freed",money(r.freed)+"/mo"]:null,r.avoid>1?[c==="gold"?"Interest per year":"Interest you avoid",money(r.avoid)]:null].filter(Boolean);
+  openSheet(`${shead(it.cat,it.name,[CAT[it.cat].label,it.lender].filter(Boolean).join(" · "))}
+    <div class="facts">${facts.map(([l,v])=>`<div class="fact"><span>${l}</span><b>${v}</b></div>`).join("")}</div>
+    ${it.cat==="settle"||it.cat==="hand"||it.cat==="card"?`<div class="alert info"><span class="dot"></span><span>${it.cat==="card"?"Banks often accept a one‑time settlement below the outstanding, but it is reported to CIBIL as “settled” and lowers your score. Paying in full keeps it “closed”.":it.cat==="hand"?"For money from a person, agree the final amount together and write it in the comment.":"Enter the final amount agreed with the lender."}</span></div>`:c==="emi"?`<div class="alert info"><span class="dot"></span><span>Ask the bank for a <b>foreclosure letter</b>; it shows the exact amount for a date. Floating‑rate loans to individuals usually have no foreclosure charge.</span></div>`:""}
+    <div class="row"><label class="f">Settle / close for (₹)<input id="st-amt" type="number" min="0" inputmode="numeric" value="${Math.round(r.amt)}"></label><label class="f">Plan to close by<input id="st-by" type="month" value="${r.by}"></label></div>
+    <label class="f">Comment<input id="st-note" value="${esc(r.note)}" placeholder="e.g. bank agreed ₹40,000 one‑time"></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn dark" type="button" id="st-save">${r.on?"Save plan":"Add to my plan"}</button>${r.on?`<button class="btn ghost" type="button" id="st-drop">Remove from plan</button>`:""}</div>
+    <div class="card"><h3>Already paid it off?</h3><p class="small muted">This closes the ${c==="card"?"card balance":"loan"} and removes its EMIs and dues from every month.</p><button class="btn good" type="button" id="st-close">✓ Mark as settled / closed</button></div>
+    <button class="linkbtn" type="button" data-loan="${it.id}">Open loan details ›</button>`);
+  const read=()=>({amt:val("st-amt")===""?null:Math.round(+val("st-amt")),by:val("st-by"),note:val("st-note").trim()});
+  $("st-save").onclick=()=>{setPlan(id,{...read(),on:true});closeSheet();toast(`${it.name} is in your plan`)};
+  $("st-drop")?.addEventListener("click",()=>{setPlan(id,{on:false});closeSheet()});
+  $("st-close").onclick=()=>{const v=read(),amt=v.amt??Math.round(r.payoff);closeDebt(it,amt,v.note);closeSheet()};
+}
+function closeDebt(it,amt,note){
+  const prev={bal:it.bal,mode:it.mode,pay:it.pay,to:it.to};const pid=uid();
+  if(it.cat==="card"&&it.mode==="rotate"){it.mode="revolve";it.pay=0}
+  it.bal=0;if(it.cat==="gold")it.to="";
+  S.payments.push({id:pid,itemId:it.id,amt:Math.round(amt),date:ymd(new Date()),kind:"settle",note:note||"",prev});
+  S.settle[it.id]={...(S.settle[it.id]||{}),on:false,done:true};
+  leaveExample();save();render();toast(`${it.name} closed · ${money(amt)}`,()=>undoClose(pid));
+}
+function undoClose(pid){const i=S.payments.findIndex(p=>p.id===pid);if(i<0)return;const p=S.payments[i],it=items().find(x=>x.id===p.itemId);
+  if(it&&p.prev)Object.assign(it,p.prev);S.payments.splice(i,1);if(S.settle[p.itemId])delete S.settle[p.itemId].done;save();render();toast("Reopened")}
+/* edit an outstanding amount straight from the breakdown */
+function setOutstanding(it,v){
+  if(it.cat==="card"&&it.mode==="rotate"){it.pay=v;it.bal=v;return}
+  it.bal=v;
+  if(CAT[it.cat].calc==="emi"){it.know="current";it.cur=String(v);const n=nLeft(v,it.apr,it.pay);it.left=isFinite(n)?String(n):"";
+    if(!it.next){const d=nextDue(it);it.next=ymd(d)}}
+  if(it.cat==="settle"&&it.total&&v>it.total)it.total=v;
+}
+function nextDue(it){const t=today0(),k=curKey(),paid=(S.paid[k]||{})[it.id];const d=new Date(t.getFullYear(),t.getMonth()+(paid||it.day<t.getDate()?1:0),1);d.setDate(Math.min(it.day||1,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));return d}
+$("stBreak").addEventListener("change",e=>{const id=e.target.dataset.bedit;if(!id)return;const it=items().find(x=>x.id===id);if(!it)return;
+  const raw=e.target.value.trim();if(raw===""){it.bal=null;}else{const v=Math.max(0,Math.round(+raw));if(!isFinite(v))return;setOutstanding(it,v)}
+  leaveExample();save();render();toast(`${it.name} updated · ${money(raw===""?0:+raw)}`)});
+$("stBreak").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset.bedit){e.preventDefault();e.target.blur()}});
+$("stFund").addEventListener("input",()=>{S.settleFund=+$("stFund").value||0;leaveExample();save();renderSettle()});
+$("stSmart").onclick=()=>{const rows=settleRows().filter(r=>r.payoff!=null).sort((a,b)=>smartScore(b)-smartScore(a)).slice(0,3);rows.forEach(r=>S.settle[r.id]={...(S.settle[r.id]||{}),on:true});leaveExample();save();render();toast(`Ticked ${rows.map(r=>r.it.name).join(", ")}`)};
+$("stAdd").onclick=()=>{openPicker(null);};
+
+/* ================= sheets ================= */
+function openSheet(html,view){$("sheetBody").dataset.view=view||"";$("sheetBody").innerHTML=`<span class="grab"></span>`+html;$("sheet").hidden=false;setTimeout(()=>$("sheetBody").querySelector("input,select,button.btn")?.focus(),50)}
+function closeSheet(){$("sheet").hidden=true;$("sheetBody").innerHTML=""}
+$("sheet").addEventListener("click",e=>{if(e.target.id==="sheet"||e.target.closest("[data-close]"))closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)closeSheet()});
+const shead=(c,title,sub)=>`<div class="shead" style="${kc(c)}"><span class="ico">${icon(c)}</span><div class="grow"><h2>${esc(title)}</h2>${sub?`<div class="tiny muted">${sub}</div>`:""}</div><button class="x" type="button" data-close aria-label="Close">×</button></div>`;
+
+/* alerts */
+let ALERTS=[];
+function openAlerts(){
+  const mk=curKey(),od=monthItems(mk).filter(r=>!r.paid&&r.status==="overdue").map(r=>({...r,mk}));
+  const list=ALERTS.length?ALERTS.map(([c,t,k])=>`<div class="alert ${c}"><span class="dot"></span><span>${t}</span></div>`+(k==="overdue"&&od.length?`<button class="btn good wide" type="button" id="paidBefore">✓ All ${od.length} are already paid</button><div class="card" style="padding:8px 14px"><div class="list">${od.map(r=>rowHTML(r,false)).join("")}</div></div>`:"")).join("")
+    :`<div class="alert good"><span class="dot"></span><span>All clear. Nothing overdue or needing attention.</span></div>`;
+  openSheet(`<div class="head"><h2>Alerts</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>${list}`,"alerts");
+  $("paidBefore")?.addEventListener("click",()=>{const rs=monthItems(mk).filter(r=>!r.paid&&r.status==="overdue");rs.forEach(r=>markPaid(r.id,mk,r.amt,"",true));save();render();toast(`${rs.length} marked as paid`)});
+}
+$("bellBtn").onclick=openAlerts;
+
+/* add picker */
+function openPicker(forMonth){
+  const tile=c=>`<button type="button" data-addcat="${c}" style="${kc(c)}"><span class="ico">${icon(c)}</span>${CAT[c].label}${CAT[c].hint?`<small>${CAT[c].hint}</small>`:""}</button>`;
+  openSheet(`<div class="head"><h2>${forMonth?`One‑time payment · ${mkLabel(forMonth)}`:"What do you want to add?"}</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>
+    ${forMonth?`<div class="pick">${PAY_ORDER.map(tile).join("")}</div>`:`<span class="label">Every‑month payments</span><div class="pick">${PAY_ORDER.map(tile).join("")}</div>
+    <span class="label">Loans, EMIs &amp; cards</span><div class="pick">${LOAN_ORDER.map(tile).join("")}</div>
+    <span class="label">Daily</span><div class="pick"><button type="button" data-addspend style="${kc("spend")}"><span class="ico">${icon("spend")}</span>A spend<small>food, petrol…</small></button><button type="button" data-addone style="${kc("other")}"><span class="ico">${icon("other")}</span>One‑time payment<small>only this month</small></button></div>`}`);
+  $("sheetBody").dataset.oneoff=forMonth||"";
+}
+
+/* item form */
+const val=id=>$(id)?.value??"";
+function itemForm(cat,it,oneoffMk){
+  const C=CAT[cat],c=C.calc,e=it||{};
+  let f=`${shead(cat,(e.id?"Edit ":"Add ")+C.label.toLowerCase(),oneoffMk?`Only for ${mkLabel(oneoffMk)}`:C.hint||"")}<form id="itemForm" class="stack" autocomplete="off" data-cat="${cat}" data-id="${e.id||""}" data-oneoff="${oneoffMk||""}">`;
+  const cats=oneoffMk?PAY_ORDER:[...PAY_ORDER,...LOAN_ORDER];
+  f+=`<label class="f">Type<select id="f-cat">${cats.map(k=>`<option value="${k}"${k===cat?" selected":""}>${CAT[k].label}</option>`).join("")}</select></label>`;
+  f+=`<label class="f">Name<input id="f-name" value="${esc(e.name||"")}" placeholder="${C.ph}" required></label>`;
+  if(C.group==="pay"){
+    f+=`<div class="row"><label class="f">Amount (₹)${cat==="bills"?" · usual":""}<input id="f-pay" type="number" min="0" step="1" inputmode="numeric" value="${e.pay||""}" required></label><label class="f">Day of month<input id="f-day" type="number" min="1" max="31" inputmode="numeric" value="${e.day||S.salaryDay||1}" required></label></div>
+      ${oneoffMk?"":`<label class="check"><input type="checkbox" id="f-var" ${e.variable||(!it&&cat==="bills")?"checked":""}> Amount changes every month (ask me when I mark it paid)</label>`}
+      <label class="f">Comment<input id="f-note" value="${esc(e.note||"")}" placeholder="optional"></label>`;
+  } else {
+    f+=`<label class="f">${cat==="hand"?"Borrowed from":cat==="gold"?"Lender & branch":"Bank / lender"}<input id="f-lender" list="banks" value="${esc(e.lender||"")}" placeholder="${cat==="hand"?"Ravi (friend)":cat==="gold"?"Bank, T. Nagar":"HDFC Bank"}"></label>
+    <datalist id="banks">${["SBI","HDFC Bank","ICICI Bank","Axis Bank","Kotak Mahindra Bank","Bajaj Finserv","IDFC FIRST Bank","IndusInd Bank","Canara Bank","Indian Bank","Indian Overseas Bank","Bank of Baroda","Punjab National Bank","Union Bank of India","LIC Housing Finance","Tata Capital","Muthoot Finance","Manappuram Finance"].map(b=>`<option>${b}</option>`).join("")}</datalist>`;
+    if(c==="emi"){const know=e.know||(e.prin?"orig":known(e)&&e.bal>0?"current":"orig"),yrs=cat==="home";
+      const curV=e.cur||(known(e)&&!e.prin?Math.round(e.bal):""),leftV=e.left||(known(e)&&!e.prin&&e.pay?(isFinite(nLeft(e.bal,e.apr,e.pay))?nLeft(e.bal,e.apr,e.pay):""):""),rateV=e.rate??e.apr??(cat==="consumer"?0:"");
+      f+=`<div class="seg" style="box-shadow:none;background:var(--surface-2)" role="group" aria-label="What do you know"><button type="button" data-know="orig" aria-pressed="${know==="orig"}">I know the loan amount</button><button type="button" data-know="current" aria-pressed="${know==="current"}">I know today's balance</button></div>
+      <div class="row" data-kp="orig" ${know==="orig"?"":"hidden"}><label class="f">${cat==="consumer"?"Amount financed (₹)":"Loan amount (₹)"}<input id="f-prin" type="number" min="1" inputmode="numeric" value="${e.prin||""}" placeholder="${yrs?"2500000":"500000"}"></label>
+        <label class="f">Tenure (${yrs?"years":"months"})<input id="f-ten" type="number" min="1" step="${yrs?"0.5":"1"}" inputmode="decimal" value="${e.ten?(yrs?e.ten/12:e.ten):""}" placeholder="${yrs?"20":cat==="consumer"?"12":"48"}"></label>
+        <label class="f">First EMI date<input id="f-start" type="date" value="${e.start||""}"></label></div>
+      <div class="row" data-kp="current" ${know==="current"?"":"hidden"}><label class="f">Outstanding today (₹)<input id="f-cur" type="number" min="1" inputmode="numeric" value="${curV}" placeholder="from your bank app"></label>
+        <label class="f">EMIs left<input id="f-left" type="number" min="1" inputmode="numeric" value="${leftV}"></label><label class="f">Next EMI date<input id="f-next" type="date" value="${e.next||""}"></label></div>
+      <div class="row"><label class="f">Interest % a year<input id="f-rate" type="number" min="0" max="80" step="0.01" inputmode="decimal" value="${rateV}" placeholder="${yrs?"8.5":cat==="app"?"30":cat==="consumer"?"0 for no‑cost":"12.5"}"></label>
+        <label class="f">EMI as per bank<input id="f-emiov" type="number" min="1" inputmode="numeric" value="${e.emiOv||""}" placeholder="auto"></label>
+        <label class="f">Prepayment fee %<input id="f-fee" type="number" min="0" step="0.1" inputmode="decimal" value="${e.fee??(yrs?0:"")}" placeholder="${yrs?"0 if floating":"0"}"></label></div>
+      <div class="alert info" id="f-prev"><span class="dot"></span><span>Fill the amounts to see your EMI.</span></div>`;
+    } else if(c==="card"){const mode=e.mode||"revolve";
+      f+=`<label class="f">How you use this card<select id="f-mode"><option value="revolve"${mode==="revolve"?" selected":""}>I carry a balance (pay part, interest charged)</option><option value="rotate"${mode==="rotate"?" selected":""}>I pay full and reuse it every month</option></select></label>
+      <div class="row"><label class="f" id="w-bal">Outstanding (₹)<input id="f-bal" type="number" min="0" inputmode="numeric" value="${known(e)?Math.round(e.bal):""}"></label>
+        <label class="f" id="w-pay"><span id="l-pay">Minimum due (₹)</span><input id="f-pay" type="number" min="0" inputmode="numeric" value="${e.pay||""}" placeholder="auto 5%"></label></div>
+      <div class="row"><label class="f" id="w-apr">Interest % a year<input id="f-apr" type="number" min="0" step="0.1" inputmode="decimal" value="${e.apr??42}"></label><label class="f">Due day<input id="f-day" type="number" min="1" max="31" inputmode="numeric" value="${e.day||""}" required></label></div>`;
+    } else if(c==="gold"){
+      f+=`<div class="row"><label class="f">Jewels pledged<input id="f-items" value="${esc(e.items||"")}" placeholder="Chain, 2 bangles"></label><label class="f">Weight (g)<input id="f-grams" type="number" min="0" step="0.1" inputmode="decimal" value="${e.grams||""}"></label></div>
+      <div class="row"><label class="f">Loan amount (₹)<input id="f-bal" type="number" min="0" inputmode="numeric" value="${known(e)?Math.round(e.bal):""}" required></label><label class="f">Interest % a year<input id="f-apr" type="number" min="0" step="0.1" inputmode="decimal" value="${e.apr||""}" placeholder="9.5"></label></div>
+      <div class="row"><label class="f">Interest paid<select id="f-mode"><option value="monthly"${e.mode!=="bullet"?" selected":""}>Every month</option><option value="bullet"${e.mode==="bullet"?" selected":""}>All at the end</option></select></label><label class="f">Interest day<input id="f-day" type="number" min="1" max="31" inputmode="numeric" value="${e.day||S.salaryDay||1}"></label></div>
+      <div class="row"><label class="f">Pledged on<input id="f-from" type="date" value="${e.from||""}"></label><label class="f">Renew / release by<input id="f-to" type="date" value="${e.to||""}"></label></div>`;
+    } else if(c==="settle"){
+      f+=`<div class="row"><label class="f">Total settled amount (₹)<input id="f-total" type="number" min="1" inputmode="numeric" value="${e.total||""}" required></label><label class="f">Instalment (₹)<input id="f-pay" type="number" min="1" inputmode="numeric" value="${e.pay||""}" required></label></div>
+      <div class="row"><label class="f">Still to pay (₹)<input id="f-bal" type="number" min="0" inputmode="numeric" value="${known(e)?Math.round(e.bal):""}" placeholder="= total if none paid"></label><label class="f">Due day<input id="f-day" type="number" min="1" max="31" inputmode="numeric" value="${e.day||""}" required></label></div>`;
+    } else {
+      f+=`<div class="row"><label class="f">Amount you owe (₹)<input id="f-bal" type="number" min="0" inputmode="numeric" value="${known(e)?Math.round(e.bal):""}" required></label><label class="f">Interest % a year<input id="f-apr" type="number" min="0" step="0.1" inputmode="decimal" value="${e.apr||0}"></label></div>
+      <div class="row"><label class="f">Monthly payment (₹)<input id="f-pay" type="number" min="0" inputmode="numeric" value="${e.pay||""}" placeholder="0 if no fixed amount"></label><label class="f">Day<input id="f-day" type="number" min="1" max="31" inputmode="numeric" value="${e.day||S.salaryDay||1}"></label></div>`;
+    }
+    f+=`<label class="f">Comment<input id="f-note" value="${esc(e.note||"")}" placeholder="optional"></label>`;
+  }
+  f+=`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" data-submit>${e.id?"Save changes":"Add"}</button>${e.id?`<button class="btn danger" type="button" data-delitem="${e.id}">Delete</button>`:""}</div></form>`;
+  openSheet(f);
+  const form=$("itemForm");
+  form.querySelectorAll("[data-know]").forEach(b=>b.addEventListener("click",()=>{form.dataset.know=b.dataset.know;form.querySelectorAll("[data-know]").forEach(x=>x.setAttribute("aria-pressed",x===b));form.querySelectorAll("[data-kp]").forEach(p=>p.hidden=p.dataset.kp!==b.dataset.know);emiPreview()}));
+  form.dataset.know=know0(e);
+  $("f-cat").addEventListener("change",()=>{const d=draftFrom(form);itemForm($("f-cat").value,{...(it||{}),...d,id:e.id},oneoffMk)});
+  form.addEventListener("input",()=>{if(c==="emi")emiPreview();if(c==="card")cardMode()});
+  if($("f-mode")&&c==="card")$("f-mode").addEventListener("change",cardMode);
+  if(c==="emi")emiPreview();if(c==="card")cardMode();
+}
+function know0(e){return e.know||(e.prin?"orig":known(e)&&e.bal>0?"current":"orig")}
+function draftFrom(form){const d={name:val("f-name"),note:val("f-note")};const num=id=>$(id)&&val(id)!==""?+val(id):undefined;
+  if($("f-lender"))d.lender=val("f-lender");["pay","day","apr"].forEach(k=>{const v=num("f-"+k);if(v!==undefined)d[k]=v});
+  if($("f-bal")&&val("f-bal")!=="")d.bal=+val("f-bal");
+  if($("f-prin")){const r=readEmi();Object.assign(d,r);d.ten=r.ten||undefined;const c=computeEmi(r);if(c){d.bal=Math.round(c.bal);d.pay=Math.round(c.emi);d.apr=+r.rate||0}}
+  else if(d.bal!=null){d.know="current";d.cur=d.bal;d.rate=d.apr;delete d.prin}
+  return d}
+function readEmi(){const form=$("itemForm"),yrs=form.dataset.cat==="home";return {know:form.dataset.know,prin:val("f-prin"),ten:val("f-ten")?Math.round(+val("f-ten")*(yrs?12:1)):"",start:val("f-start"),cur:val("f-cur"),left:val("f-left"),next:val("f-next"),rate:val("f-rate"),emiOv:val("f-emiov"),fee:val("f-fee")}}
+function emiPreview(){const f=readEmi(),c=computeEmi(f),el=$("f-prev");if(!el)return;
+  if(!c){el.className="alert info";el.innerHTML=`<span class="dot"></span><span>${f.know==="orig"?"Fill loan amount, tenure and interest to see your EMI.":"Fill outstanding, EMIs left and interest to see your EMI."}</span>`;return}
+  const calc=f.know==="orig"?emiFor(f.prin,f.rate,f.ten):emiFor(f.cur,f.rate,f.left),off=f.emiOv&&Math.abs(+f.emiOv-calc)>Math.max(50,calc*.02);
+  const s=prepaySim(c.bal,f.rate,c.emi);
+  el.className="alert "+(off?"warn":"info");
+  el.innerHTML=`<span class="dot"></span><span><b>EMI ${money(c.emi)}</b>${f.emiOv?` (formula says ${money(calc)})`:""}<br>${f.know==="orig"?`${c.k} of ${c.ten} EMIs paid · `:""}Outstanding today <b>${money(c.bal)}</b> · ${isFinite(c.left)?c.left:"∞"} EMIs left<br>Interest still to pay <b>${money(s.int)}</b>${c.totalInt!=null?` · total interest on the loan ${money(c.totalInt)}`:""}${off?"<br>Your bank's EMI is quite different from the formula. Check the rate or tenure.":""}</span>`}
+function cardMode(){const r=val("f-mode")==="rotate";$("l-pay").textContent=r?"Bill you pay each month (₹)":"Minimum due (₹)";$("f-pay").placeholder=r?"18000":"auto 5%";$("w-apr").hidden=r;$("w-bal").hidden=r}
+function submitItem(form){
+  const cat=form.dataset.cat,C=CAT[cat],c=C.calc,id=form.dataset.id||uid(),old=items().find(x=>x.id===id),oneMk=form.dataset.oneoff;
+  const name=val("f-name").trim()||C.label,note=val("f-note").trim();
+  let it={id,cat,name,note};
+  if(C.group==="pay"){it.pay=+val("f-pay")||0;it.day=Math.min(31,Math.max(1,+val("f-day")||1));it.variable=!!$("f-var")?.checked;
+    if(oneMk){S.oneoff[oneMk]=S.oneoff[oneMk]||[];S.oneoff[oneMk].push(it);leaveExample();save();closeSheet();render();toast(`Added to ${mkLabel(oneMk)}`);return}}
+  else{it.lender=val("f-lender").trim();
+    if(c==="emi"){const f=readEmi(),r=computeEmi(f);if(!r){toast(f.know==="orig"?"Enter loan amount, tenure and interest":"Enter outstanding, EMIs left and interest");return}
+      if(f.know==="orig"&&!f.start){toast("Enter the first EMI date");$("f-start").focus();return}
+      if(f.know==="current"&&!f.next){toast("Enter the next EMI date");$("f-next").focus();return}
+      Object.assign(it,f,{ten:f.ten?+f.ten:null,apr:+f.rate||0,pay:Math.round(r.emi),bal:Math.round(r.bal),day:r.day,fee:+f.fee||0});
+      if(old&&["know","prin","ten","start","cur","left","rate","emiOv"].every(x=>String(old[x]??"")===String(it[x]??"")))it.bal=old.bal}
+    else if(c==="card"){it.mode=val("f-mode");it.day=+val("f-day")||1;if(it.mode==="rotate"){it.pay=+val("f-pay")||0;it.bal=it.pay;it.apr=+old?.apr||42}else{it.bal=val("f-bal")===""?null:+val("f-bal");it.apr=+val("f-apr")||0;it.pay=+val("f-pay")||Math.max(200,Math.round((+it.bal||0)*0.05))}}
+    else if(c==="gold"){Object.assign(it,{items:val("f-items").trim(),grams:+val("f-grams")||0,bal:+val("f-bal")||0,apr:+val("f-apr")||0,mode:val("f-mode"),day:+val("f-day")||1,from:val("f-from"),to:val("f-to")});it.pay=it.mode==="bullet"?0:Math.round(it.bal*it.apr/1200)}
+    else if(c==="settle"){Object.assign(it,{total:+val("f-total")||0,pay:+val("f-pay")||0,day:+val("f-day")||1});it.inst=it.pay;it.bal=val("f-bal")===""?it.total:+val("f-bal");it.apr=0}
+    else{Object.assign(it,{bal:val("f-bal")===""?null:+val("f-bal"),apr:+val("f-apr")||0,pay:+val("f-pay")||0,day:+val("f-day")||1})}
+  }
+  leaveExample();
+  if(old)Object.assign(old,it);else{S.items.push(it);
+    if(c==="emi"&&it.know==="orig"){const t=new Date(),k=curKey();if(it.day<t.getDate()&&paidCount(it.start,it.ten)>0){S.paid[k]=S.paid[k]||{};S.paid[k][it.id]={amt:it.pay,date:ymd(new Date(t.getFullYear(),t.getMonth(),it.day)),prevBal:Math.round(balAfter(+it.prin,it.apr,it.pay,paidCount(it.start,it.ten)-1)),auto:true}}}}
+  save();closeSheet();render();toast(`${old?"Saved":"Added"} ${name}${C.group==="loan"&&it.pay?` · ${money(it.pay)}/month`:""}`);
+}
+document.addEventListener("submit",e=>{if(e.target.id==="itemForm"){e.preventDefault();submitItem(e.target)}});
+
+/* loan detail */
+const CALC={};
+const fact=(l,v)=>`<div class="fact"><span>${l}</span><b>${v}</b></div>`;
+function calcBase(it){return prepaySim(it.bal,CAT[it.cat].calc==="settle"?0:it.apr,it.pay)}
+function calcRes(it){const st=CALC[it.id]||{},amt=+st.amt||0,frq=st.frq||"m",card=it.cat==="card";const base=calcBase(it);
+  if(!amt)return `<p class="small muted">${card?"Enter what you can pay each month.":"Enter an extra amount. Your EMI stays the same; the loan just ends sooner."}</p>`;
+  let w;if(card){if(amt<=it.bal*mr(it.apr))return `<div class="alert bad"><span class="dot"></span><span>${money(amt)} doesn't cover the ${money(it.bal*mr(it.apr))} monthly interest.</span></div>`;w=prepaySim(it.bal,it.apr,amt)}
+  else w=prepaySim(it.bal,it.apr,it.pay,{[frq]:amt,fee:it.fee});
+  const sI=base.int-w.int,sM=base.months-w.months,net=sI-w.fees;
+  return `<table class="cmp"><tr><th></th><th class="n">Ends</th><th class="n">Interest</th></tr><tr><td>${card?`Min due ${money(it.pay)}`:"EMI only"}</td><td class="n">${closeOn(it,base.months)}</td><td class="n">${money(base.int)}</td></tr><tr class="best"><td>${card?`${money(amt)}/month`:frq==="q"?`+${money(amt)} each quarter`:frq==="once"?`${money(amt)} once`:`+${money(amt)} each month`}</td><td class="n">${closeOn(it,w.months)}</td><td class="n">${money(w.int)}</td></tr></table>
+    <div class="alert good"><span class="dot"></span><span>${isFinite(sI)?`Saves <b>${money(sI)}</b> interest`:"Clears a loan that would <b>never</b> close"}${isFinite(sM)&&sM>0?` and <b>${monthsTxt(sM)}</b>`:""}.${w.fees>0?` Prepayment charges ≈ ${money(w.fees)}, net gain ${money(net)}.`:""}</span></div>`}
+function targetRes(it){const t=Math.round(+(CALC[it.id]||{}).tgt||0);if(!(t>0))return"";const base=calcBase(it);
+  if(base.months<=t)return `<p class="small" style="color:var(--good);font-weight:800">Already ends in ${monthsTxt(base.months)}.</p>`;
+  if(it.cat==="card"){let lo=it.pay,hi=it.bal*2;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(prepaySim(it.bal,it.apr,m).months<=t)hi=m;else lo=m}return `<p class="small">To clear in <b>${t} months</b>, pay <b>${money(Math.ceil(hi/100)*100)}</b> every month.</p>`}
+  return `<p class="small">To close in <b>${t} months</b> (by ${closeOn(it,t)}) pay one of: <b>${money(solveFor(it.bal,it.apr,it.pay,t,"m"))}</b> extra monthly, <b>${money(solveFor(it.bal,it.apr,it.pay,t,"q"))}</b> extra each quarter, or <b>${money(solveFor(it.bal,it.apr,it.pay,t,"once"))}</b> once now.</p>`}
+function schedule(it){const r=mr(it.apr);let b=it.bal,rows="",ti=0,tp=0;const pc=(S.paid[curKey()]||{})[it.id]?1:0;
+  for(let i=0;i<12&&b>0.5;i++){const x=b*r,pay=Math.min(it.pay,b+x),p=pay-x;b=Math.max(0,b-p);ti+=x;tp+=p;rows+=`<tr><td>${monYrAt(i+pc).replace(" 20"," ’")}</td><td class="n">${money(x)}</td><td class="n">${money(p)}</td><td class="n">${money(b)}</td></tr>`}
+  return `<div class="tablewrap"><table class="cmp"><tr><th>Month</th><th class="n">Interest</th><th class="n">Principal</th><th class="n">Balance</th></tr>${rows}<tr><td><b>12 mo</b></td><td class="n"><b>${money(ti)}</b></td><td class="n"><b>${money(tp)}</b></td><td></td></tr></table></div>`}
+function openLoan(id){
+  const it=items().find(x=>x.id===id);if(!it)return;const C=CAT[it.cat],c=C.calc,left=monthsLeftOf(it);
+  let facts="";
+  if(known(it)&&it.bal>0.5){
+    if(c==="emi"){const base=prepaySim(it.bal,it.apr,it.pay),i=it.bal*mr(it.apr),p=Math.min(it.pay,it.bal+i)-i;const paidN=it.ten&&it.know==="orig"?it.ten-left:null;
+      facts=fact("EMI",money(it.pay))+fact("Interest rate",`${it.apr}%`)+fact("EMIs left",isFinite(left)?`${left}${it.ten&&it.know==="orig"?` of ${it.ten}`:""}`:"never")+fact("Ends",closeOn(it,left))+fact("Interest still to pay",money(base.int))+fact("This EMI",`${money(i)} int · ${money(p)} principal`)+(it.prin?fact("Loan taken",money(it.prin)):"")+fact("Close today ≈",money(it.bal*(1+(+it.fee||0)/100)));
+      if(it.cat==="home")facts+=`</div><div class="alert info"><span class="dot"></span><span>Home loans are usually your cheapest debt. Prepay them after app loans, cards and personal loans are closed. Floating‑rate home loans normally have no prepayment charge.</span></div><div class="facts" style="display:none">`;
+      if(it.cat==="consumer"&&!it.apr)facts+=`</div><div class="alert info"><span class="dot"></span><span>No‑cost EMI: no interest, so closing it early saves nothing. Just let it run.</span></div><div class="facts" style="display:none">`}
+    else if(c==="card"){if(it.mode==="rotate")facts=fact("Monthly bill",money(it.pay))+fact("Due",ord(it.day));else{const b=prepaySim(it.bal,it.apr,it.pay);facts=fact("Outstanding",money(it.bal))+fact("Min due",money(it.pay))+fact("Interest / month",money(it.bal*mr(it.apr)))+fact("At min due",isFinite(b.months)?`${monthsTxt(b.months)} · ${money(b.int)}`:"never")}}
+    else if(c==="gold")facts=fact("Loan",money(it.bal))+fact("Rate",`${it.apr}%`)+fact(it.mode==="bullet"?"Interest built up":"Monthly interest",money(it.mode==="bullet"?goldAccrued(it):it.pay))+fact("Release today ≈",money(it.bal+goldAccrued(it)))+(it.grams?fact("Jewels",`${esc(it.items||"")} ${it.grams} g`):"")+(it.to?fact("Renew by",fdate(it.to)):"");
+    else facts=fact("Left to pay",money(it.bal))+(it.pay?fact(c==="settle"?"Instalment":"Monthly",money(it.pay)):"")+(isFinite(left)?fact("Ends",closeOn(it,left)):"")+(it.apr?fact("Rate",`${it.apr}%`):"");
+  }
+  const canCalc=known(it)&&it.bal>0.5&&it.pay>0&&c!=="gold"&&!(c==="card"&&it.mode==="rotate")&&(c!=="emi"||it.apr>0||it.cat!=="consumer");
+  const st=CALC[it.id]||{},card=it.cat==="card";
+  const chips=card?[[5000,"m","₹5,000/month"],[10000,"m","₹10,000/month"],[Math.ceil(it.bal/6/100)*100,"m","Clear in ~6 months"]]:[[5000,"m","+₹5,000 monthly"],[Math.round(it.pay),"q","+1 EMI each quarter"],[it.cat==="home"?200000:100000,"once",it.cat==="home"?"₹2,00,000 once":"₹1,00,000 once"]];
+  openSheet(`${shead(it.cat,it.name,[C.label,it.lender].filter(Boolean).join(" · "))}
+    <div class="hero" style="padding:16px;gap:6px"><span class="label">${c==="card"&&it.mode==="rotate"?"Pay every month":"Outstanding"}</span><div class="big" style="font-size:2.3rem">${known(it)?money(c==="card"&&it.mode==="rotate"?it.pay:it.bal):"Not entered"}</div>${it.note?`<span class="sub">“${esc(it.note)}”</span>`:""}</div>
+    ${facts?`<div class="facts">${facts}</div>`:`<div class="alert warn"><span class="dot"></span><span>Add the outstanding amount (Edit) to see the calculations.</span></div>`}
+    ${canCalc?`<details class="calc" open><summary>${card?"Clear this card faster":"Close it faster"}</summary>
+      <div class="chips" style="flex-wrap:wrap">${chips.map(([a,f,l])=>`<button class="chip" type="button" data-q="${a}|${f}">${l}</button>`).join("")}</div>
+      <div class="row"><label class="f">${card?"Pay each month (₹)":"Extra amount (₹)"}<input id="cx-amt" type="number" min="0" step="500" inputmode="numeric" value="${st.amt||""}"></label>${card?"":`<label class="f">How often<select id="cx-frq"><option value="m"${(st.frq||"m")==="m"?" selected":""}>Every month</option><option value="q"${st.frq==="q"?" selected":""}>Every quarter</option><option value="once"${st.frq==="once"?" selected":""}>Once, now</option></select></label>`}</div>
+      <div id="cx-res">${calcRes(it)}</div>
+      <label class="f">Or: I want it closed in (months)<input id="cx-tgt" type="number" min="1" inputmode="numeric" value="${st.tgt||""}" placeholder="12"></label><div id="cx-tres">${targetRes(it)}</div></details>`:""}
+    ${c==="emi"&&known(it)&&it.bal>0.5&&it.apr>0?`<details class="calc"><summary>Next 12 EMIs: interest vs principal</summary>${schedule(it)}</details>`:""}
+    ${known(it)&&it.bal>0.5&&!(c==="card"&&it.mode==="rotate")?`<div class="card"><h3>Record a part‑payment</h3><div style="display:flex;gap:8px"><input id="pp-amt" type="number" min="1" inputmode="numeric" placeholder="₹ paid extra"><button class="btn dark" type="button" data-prepay="${it.id}">Save</button></div><p class="tiny muted">Reduces the outstanding. Your EMI stays the same and the loan ends sooner.</p></div>`:""}
+    <div style="display:flex;gap:8px"><button class="btn ghost" type="button" data-edititem="${it.id}">Edit details</button><button class="btn danger" type="button" data-delitem="${it.id}">Delete</button></div>`);
+  const sb=$("sheetBody");
+  const upd=()=>{$("cx-res")&&($("cx-res").innerHTML=calcRes(it));$("cx-tres")&&($("cx-tres").innerHTML=targetRes(it))};
+  sb.addEventListener("input",e=>{const m=e.target.id.match(/^cx-(amt|frq|tgt)$/);if(!m)return;(CALC[it.id]=CALC[it.id]||{})[m[1]]=e.target.value;upd()});
+  sb.addEventListener("change",e=>{if(e.target.id==="cx-frq"){(CALC[it.id]=CALC[it.id]||{}).frq=e.target.value;upd()}});
+  sb.querySelectorAll("[data-q]").forEach(b=>b.addEventListener("click",()=>{const [a,f]=b.dataset.q.split("|");CALC[it.id]={...(CALC[it.id]||{}),amt:a,frq:f};$("cx-amt").value=a;if($("cx-frq"))$("cx-frq").value=f;upd()}));
+}
+
+/* this-month row sheet */
+function openRow(id,mk){
+  const r=monthItems(mk).find(x=>x.id===id);if(!r)return;const it=r.item,loan=isLoan(it)&&!r.oneoff;
+  openSheet(`${shead(r.cat,r.name,`${CAT[r.cat].label} · ${mkLabel(mk)} · due ${r.due.getDate()} ${MON[r.due.getMonth()]}`)}
+    <form id="rowForm" class="stack" autocomplete="off">
+      <label class="f">Amount for ${MONF[mkParse(mk).m-1]} (₹)<input id="r-amt" type="number" min="0" inputmode="numeric" value="${r.paid?r.paid.amt:r.amt}"></label>
+      <label class="f">Comment<input id="r-note" value="${esc((S.notes[mk]||{})[id]||r.paid?.note||"")}" placeholder="e.g. paid by GPay, included late fee"></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${r.paid?`<button class="btn danger" type="button" id="r-unpay">Mark not paid</button><button class="btn" type="button" data-submit>Save</button>`:`<button class="btn good" type="button" data-submit>✓ Mark paid</button><button class="btn ghost" type="button" id="r-save">Save amount only</button>`}</div>
+      ${loan?`<button class="linkbtn" type="button" data-loan="${it.id}">Open loan details & calculator ›</button>`:r.oneoff?`<button class="linkbtn" type="button" id="r-del" style="color:var(--bad)">Remove this one‑time payment</button>`:`<button class="linkbtn" type="button" data-edititem="${it.id}">Edit this monthly payment ›</button>`}
+    </form>`);
+  const keepNote=()=>{const n=val("r-note").trim();S.notes[mk]=S.notes[mk]||{};if(n)S.notes[mk][id]=n;else delete S.notes[mk][id]};
+  const keepAmt=()=>{const a=Math.round(+val("r-amt")||0);S.amounts[mk]=S.amounts[mk]||{};if(a!==Math.round(r.paid?r.paid.amt:payOf(it)))S.amounts[mk][id]=a;return a};
+  $("rowForm").addEventListener("submit",e=>{e.preventDefault();const a=keepAmt();keepNote();if(r.paid){r.paid.amt=a;S.paid[mk][id].amt=a;S.paid[mk][id].note=val("r-note").trim();save();closeSheet();render();toast("Saved")}else{closeSheet();markPaid(id,mk,a,val("r-note").trim())}});
+  $("r-save")?.addEventListener("click",()=>{keepAmt();keepNote();leaveExample();save();closeSheet();render();toast("Saved for this month")});
+  $("r-unpay")?.addEventListener("click",()=>{closeSheet();unpay(id,mk)});
+  $("r-del")?.addEventListener("click",()=>{S.oneoff[mk]=(S.oneoff[mk]||[]).filter(o=>o.id!==id);save();closeSheet();render();toast("Removed")});
+}
+
+/* ================= paying ================= */
+function findItem(id,mk){const base=id.replace(/:renew$/,"");return items().find(x=>x.id===base)||(S.oneoff[mk]||[]).find(o=>o.id===id)}
+/* An EMI whose date has passed is already inside a balance worked out from "loan amount + first EMI date",
+   and inside an "outstanding today" whose next EMI date is after it — don't subtract it a second time. */
+function alreadyInBalance(it,r){if(!r||CAT[it.cat].calc!=="emi")return false;
+  if(it.know==="orig"&&r.due<=today0())return true;
+  if(it.know==="current"&&it.next&&r.due<new Date(it.next+"T00:00"))return true;
+  return false}
+function markPaid(id,mk,amt,note,quiet){
+  const it=findItem(id,mk);if(!it)return;const r=monthItems(mk).find(x=>x.id===id);
+  if(amt==null)amt=r?r.amt:payOf(it);
+  S.paid[mk]=S.paid[mk]||{};const rec={amt:Math.round(amt),date:ymd(new Date()),...(note?{note}:{})};
+  if(id.endsWith(":renew")){rec.prevFrom=it.from;rec.prevTo=it.to;const t=new Date();it.from=ymd(t);const n=new Date(t);n.setFullYear(n.getFullYear()+1);it.to=ymd(n)}
+  else if(isLoan(it)&&known(it)&&!(it.cat==="card"&&it.mode==="rotate")&&!alreadyInBalance(it,r)){rec.prevBal=it.bal;const c=CAT[it.cat].calc,int=c==="settle"?0:it.bal*mr(it.apr);
+    if(c==="gold")it.bal=Math.max(0,Math.round(it.bal-Math.max(0,amt-int)));else it.bal=Math.max(0,Math.round(it.bal+int-amt));
+    if(it.know==="current"&&it.next){const n=new Date(it.next+"T00:00");if(r&&r.due>=n){n.setMonth(n.getMonth()+1);rec.prevNext=it.next;it.next=ymd(n)}}
+    S.payments.push({id:uid(),itemId:it.id,amt:Math.round(amt),date:rec.date,kind:"due",mk})}
+  S.paid[mk][id]=rec;leaveExample();if(quiet)return;save();render();
+  toast(`${it.name} paid · ${money(amt)}`,()=>unpay(id,mk));
+}
+function unpay(id,mk){const p=(S.paid[mk]||{})[id];if(!p)return;const it=findItem(id,mk);
+  if(it){if(p.prevBal!=null)it.bal=p.prevBal;if(p.prevNext)it.next=p.prevNext;if(id.endsWith(":renew")){it.from=p.prevFrom;it.to=p.prevTo}const i=S.payments.map(x=>x.itemId===it.id&&x.kind==="due"&&x.mk===mk).lastIndexOf(true);if(i>-1)S.payments.splice(i,1)}
+  delete S.paid[mk][id];save();render();toast("Marked not paid")}
+
+/* ================= errors ================= */
+function showErr(err){const m=(err&&err.message)||String(err);console.error(err);const el=$("toast");$("toastMsg").textContent="Something went wrong: "+m;$("toastAct").hidden=true;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,6000)}
+window.addEventListener("error",e=>showErr(e.error||e.message));
+window.addEventListener("unhandledrejection",e=>showErr(e.reason));
+
+/* ================= multi-select ================= */
+function selRows(){const out=[];const byMk={};SEL.forEach(k=>{const [mk,id]=k.split("|");(byMk[mk]=byMk[mk]||[]).push(id)});
+  Object.entries(byMk).forEach(([mk,ids])=>{const list=monthItems(mk);ids.forEach(id=>{const r=list.find(x=>x.id===id);if(r&&!r.paid)out.push({...r,mk});else SEL.delete(mk+"|"+id)})});return out}
+function syncSel(){
+  document.querySelectorAll(".prow[data-key]").forEach(el=>{const on=SEL.has(el.dataset.key)&&!el.classList.contains("paid");el.classList.toggle("sel",on);const b=el.querySelector(".chk");if(b&&!el.classList.contains("paid"))b.setAttribute("aria-pressed",on)});
+  const rs=selRows();$("selBar").hidden=!rs.length;$("fab").hidden=!!rs.length;
+  if(rs.length){$("selCount").textContent=`${rs.length} selected`;$("selSum").textContent=money(rs.reduce((s,r)=>s+r.amt,0));$("selPay").textContent=`✓ Mark ${rs.length} paid`}
+}
+$("selClear").onclick=()=>{SEL.clear();syncSel()};
+$("selPay").onclick=()=>{
+  const rs=selRows();if(!rs.length)return;
+  try{rs.forEach(r=>markPaid(r.id,r.mk,r.amt,"",true))}catch(err){showErr(err)}
+  SEL.clear();save();render();syncSel();{
+    const tot=rs.reduce((s,r)=>s+r.amt,0);
+    toast(`${rs.length} paid · ${money(tot)}`,()=>{rs.forEach(r=>{const p=(S.paid[r.mk]||{})[r.id];if(!p)return;const it=findItem(r.id,r.mk);if(it){if(p.prevBal!=null)it.bal=p.prevBal;if(p.prevNext)it.next=p.prevNext;if(r.id.endsWith(":renew")){it.from=p.prevFrom;it.to=p.prevTo}}delete S.paid[r.mk][r.id]});save();render();toast("Undone")})}
+};
+
+/* ================= events ================= */
+/* Real form submission is blocked inside the sandboxed viewer on phones, so every form is driven by taps:
+   a tap on [data-submit] or Enter in a field fires a synthetic "submit" event that our handlers listen for. */
+function fireSubmit(form){if(form)form.dispatchEvent(new Event("submit",{bubbles:true,cancelable:true}))}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-submit]");if(!b)return;e.preventDefault();fireSubmit(b.closest("form"))},true);
+document.addEventListener("keydown",e=>{if(e.key!=="Enter"||e.isComposing)return;const el=e.target;if(!el.closest||el.tagName==="TEXTAREA"||el.tagName==="BUTTON")return;const f=el.closest("form");if(!f)return;e.preventDefault();fireSubmit(f)},true);
+document.addEventListener("submit",e=>e.preventDefault(),true);
+function toast(t,undo){const el=$("toast");$("toastMsg").textContent=t;$("toastAct").hidden=!undo;$("toastAct").onclick=()=>{el.hidden=true;undo&&undo()};el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,undo?4500:2400)}
+function leaveExample(){S.example=false}
+let pendingConfirm=null;
+function askConfirm(msg,fn){$("confirmMsg").textContent=msg;pendingConfirm=fn;$("confirmBar").hidden=false;closeSheet();window.scrollTo({top:0});$("confirmYes").focus()}
+$("confirmYes").onclick=()=>{$("confirmBar").hidden=true;pendingConfirm&&pendingConfirm();pendingConfirm=null};
+$("confirmNo").onclick=()=>{$("confirmBar").hidden=true;pendingConfirm=null};
+$("startFresh").onclick=()=>askConfirm("Clear all example data and start with yours?",()=>{const p=[S.pinHash,S.pinLen];S=blankState();[S.pinHash,S.pinLen]=p;save();render();show("free");toast("Start with your salary, then tap ＋ to add loans and payments")});
+
+const tabs=[...document.querySelectorAll("[data-tab]")];
+const TITLES={home:"Purse Zero",month:"Payments",loans:"Loans & payments",settle:"Settle & foreclose",free:"Debt‑free plan",more:"Spending & settings"};
+function show(name){screen=name;tabs.forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===name));document.querySelectorAll("[data-screen]").forEach(p=>p.hidden=p.dataset.screen!==name);$("title").textContent=TITLES[name];window.scrollTo({top:0});try{sessionStorage.setItem("pz-tab",name)}catch(e){}}
+tabs.forEach(b=>b.addEventListener("click",()=>show(b.dataset.tab)));
+$("moreBtn").onclick=()=>show("more");
+$("spendMore").onclick=()=>{oSeg="spend";show("more");renderMore()};
+$("fab").onclick=()=>openPicker(null);
+$("mPrev").onclick=()=>{viewMonth=mkAdd(viewMonth,-1);renderMonth()};
+$("mNext").onclick=()=>{viewMonth=mkAdd(viewMonth,1);renderMonth()};
+$("mToday").onclick=()=>{viewMonth=curKey();renderMonth()};
+$("mAddOne").onclick=()=>openPicker(viewMonth);
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button,[data-open],[data-stopen]");if(!t)return;const d=t.dataset;
+  if(d.go){show(d.go);return}
+  if(d.check){const mk=d.mk,id=d.check,p=(S.paid[mk]||{})[id];if(p){unpay(id,mk);return}
+    const key=mk+"|"+id;if(SEL.has(key))SEL.delete(key);else SEL.add(key);syncSel();return}
+  if(d.open){openRow(d.open,d.mk);return}
+  if(d.mf){mFilter=d.mf;renderMonth();return}
+  if(d.bopen){if(stOpen.has(d.bopen))stOpen.delete(d.bopen);else stOpen.add(d.bopen);renderSettle();return}
+  if(d.stf){stFilter=stFilter===d.stf&&!["all","plan"].includes(d.stf)?"all":d.stf;renderSettle();return}
+  if(d.sttick){const st=S.settle[d.sttick]||{};setPlan(d.sttick,{on:!st.on});return}
+  if(d.stopen){openSettle(d.stopen);return}
+  if(d.stundo){const p=S.payments.find(x=>x.id===d.stundo);if(p)undoClose(p.id);return}
+  if(d.lseg){lSeg=d.lseg;renderLoans();return}
+  if(d.oseg){oSeg=d.oseg;renderMore();return}
+  if(d.loan){openLoan(d.loan);return}
+  if(d.pay){const it=items().find(x=>x.id===d.pay);itemForm(it.cat,it);return}
+  if(d.addcat){const om=$("sheetBody").dataset.oneoff;itemForm(d.addcat,null,om||"");return}
+  if(t.hasAttribute("data-addspend")){closeSheet();show("home");$("quick").focus();return}
+  if(t.hasAttribute("data-addone")){openPicker(viewMonth===curKey()?curKey():viewMonth);return}
+  if(d.edititem){const it=items().find(x=>x.id===d.edititem);if(it)itemForm(it.cat,it);return}
+  if(d.delitem){const it=items().find(x=>x.id===d.delitem);askConfirm(`Delete ${it.name}? Its payment history stays.`,()=>{S.items=S.items.filter(x=>x.id!==it.id);leaveExample();save();render();toast("Deleted")});return}
+  if(d.prepay){const a=+val("pp-amt");if(!(a>0)){$("pp-amt").focus();return}const it=items().find(x=>x.id===d.prepay);const f=CAT[it.cat].calc==="emi"?(+it.fee||0)/100:0;const pr=a/(1+f);it.bal=Math.max(0,Math.round(it.bal-pr));S.payments.push({id:uid(),itemId:it.id,amt:a,date:ymd(new Date()),kind:"prepay"});leaveExample();save();render();openLoan(it.id);toast(`Saved · ${money(it.bal)} left`);return}
+  if(d.delexp){S.expenses=S.expenses.filter(x=>x.id!==d.delexp);save();render();return}
+  if(d.gadd||d.gout){const id=d.gadd||d.gout,a=+val("ga-"+id),g=S.goals.find(x=>x.id===id);if(!(a>0))return;g.saved=Math.max(0,g.saved+(d.gadd?a:-a));S.savelog.push({id:uid(),goalId:id,amt:a,date:ymd(new Date()),kind:d.gadd?"add":"out"});save();render();return}
+  if(d.gdel){S.goals=S.goals.filter(x=>x.id!==d.gdel);save();render();return}
+});
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.dataset?.open){e.preventDefault();openRow(e.target.dataset.open,e.target.dataset.mk)}if((e.key==="Enter"||e.key===" ")&&e.target.dataset?.stopen){e.preventDefault();openSettle(e.target.dataset.stopen)}});
+
+/* money inputs */
+const FIELD={pIncome:"income",pSalDay:"salaryDay",pLiving:"living",pSave:"saveMonthly",xAmt:"extra"};
+Object.keys(FIELD).forEach(id=>$(id).addEventListener("input",()=>{leaveExample();S[FIELD[id]]=+$(id).value||0;save();render()}));
+
+/* spends */
+const guessCat=t=>{const w=t.toLowerCase();for(const [c,ks] of Object.entries(KEYWORDS))if(ks.some(k=>new RegExp("\\b"+k+"\\b").test(w)))return c;return "Other"};
+function addExpense(amt,cat,note,date){leaveExample();S.expenses.push({id:uid(),amt:Math.round(amt),cat,note:note.trim(),date});save();render();const C=spendCtx();toast(C.spentToday>C.limit&&date===C.today?`Over today's limit by ${money(C.spentToday-C.limit)}`:`Added ${money(amt)} · ${cat}`)}
+$("quickForm").addEventListener("submit",e=>{e.preventDefault();const v=$("quick").value.trim(),m=v.match(/(\d[\d,]*(?:\.\d+)?)/);if(!m){toast("Type an amount, like “220 auto”");return}
+  const note=v.replace(m[0],"").replace(/₹|rs\.?|inr/ig,"").trim();addExpense(parseFloat(m[1].replace(/,/g,"")),guessCat(note),note,ymd(new Date()));$("quick").value=""});
+$("eCat").innerHTML=SPEND_CATS.map(c=>`<option>${c}</option>`).join("");$("eDate").value=ymd(new Date());
+$("expForm").addEventListener("submit",e=>{e.preventDefault();const a=+$("eAmt").value;if(!(a>0))return;addExpense(a,$("eCat").value,$("eNote").value,$("eDate").value||ymd(new Date()));$("eAmt").value="";$("eNote").value=""});
+$("goalForm").addEventListener("submit",e=>{e.preventDefault();S.goals.push({id:uid(),name:$("gName").value.trim(),target:+$("gTarget").value||0,saved:+$("gSaved").value||0});$("goalForm").reset();leaveExample();save();render()});
+
+/* ================= AI ================= */
+let sampleP=null;const getSample=()=>sampleP||(sampleP=window.claude?.use?.("sample")??Promise.resolve(null));
+function summary(){const fr=freedom(),F=fr.F||moneyFlow(),mk=curKey();
+  return {currency:"INR",today:ymd(new Date()),salary:S.income,living_money:S.living,savings_per_month:S.saveMonthly,spare_for_debt:Math.round(F.spare),
+    monthly_payments:items().filter(it=>!isLoan(it)).map(it=>({type:CAT[it.cat].label,name:it.name,amount:it.pay,day:it.day})),
+    loans:items().filter(loanOpen).map(it=>({type:CAT[it.cat].label,name:it.name,lender:it.lender,outstanding:known(it)?Math.round(it.bal):"unknown",interest_pct:it.apr,monthly_payment:it.pay,months_left:isFinite(monthsLeftOf(it))?monthsLeftOf(it):null,prepay_fee_pct:it.fee||0,...(it.cat==="card"?{usage:it.mode==="rotate"?"pays full and reuses monthly":"carries a balance"}:{}),...(it.cat==="gold"?{jewels:it.items,grams:it.grams,renew_by:it.to||null,interest_mode:it.mode}:{})})),
+    settle_plan:settleRows().filter(r=>r.on).map(r=>({name:r.it.name,settle_for:Math.round(r.amt||0),payoff_today:Math.round(r.payoff||0),by:r.by||null})),money_available_to_settle:+S.settleFund||0,
+    this_month:monthItems(mk).map(r=>({name:r.name,amount:r.amt,day:r.day,status:r.status})),
+    plan:fr.none?null:{debt_free_month_with_spare:isFinite(fr.rec.best.months)?monYrAt(fr.rec.best.months-1):"never",interest_with_spare:Math.round(fr.rec.best.interest),only_emis_months:fr.indep.months,only_emis_interest:Math.round(fr.indep.int),best_order:fr.rec.strat}}}
+const RULES=`You are Purse Zero, a sharp, practical money coach for a salaried person in India. There is no target date: find the easiest, cheapest realistic way to become debt-free. Priorities: (1) family money to parents and wife is never cut unless asked; (2) never miss an EMI, card due, settlement instalment or gold-loan renewal (missed gold renewals risk auction); (3) close the costliest debts first — app loans and cards usually, then personal loans, then gold, home loan last (home loans are cheap and may give tax benefit); no-cost product EMIs should simply run; (4) roll every closed EMI into the next loan; (5) keep a small emergency buffer. If a card is "paid full and reused", explain that this money is effectively borrowed every month and how to taper it. Mention balance transfer, card-to-EMI, settlement credit-score impact, and foreclosure charges only where relevant. Use specific ₹ amounts (Indian grouping) and month names. Never recommend investments or new loans except a clearly cheaper consolidation. Plain words.`;
+$("aiReview").onclick=async()=>{const out=$("aiOut");out.hidden=false;const sample=await getSample();
+  if(!sample){out.innerHTML=`<p class="small muted">The AI coach needs an internet connection. Try again when you are online.</p>`;return}
+  $("aiReview").disabled=true;out.innerHTML=`<p class="small muted">Reading your loans and payments…</p>`;
+  try{const r=await sample.json(`${RULES}\n\nDATA:\n${JSON.stringify(summary())}\n\nReply ONLY with JSON: {"headline":"one sentence with the debt-free month","moves":[{"title":"short action","why":"1-2 sentences with numbers","saves_inr":number}],"this_month":"what to do with this month's money in one sentence"}. 4-6 moves, most valuable first. If anything is overdue or a gold renewal is within 30 days, the first move addresses it.`,{modelTier:"default",cache:false});
+    out.innerHTML=`<h3>${esc(r.headline)}</h3><div class="moves">${(r.moves||[]).map(m=>`<div class="move"><b>${esc(m.title)}</b>${m.saves_inr&&!HIDE?` <span class="imp">saves ~${money(m.saves_inr)}</span>`:""}<p class="small muted">${esc(m.why)}</p></div>`).join("")}</div>${r.this_month?`<div class="alert info"><span class="dot"></span><span><b>This month:</b> ${esc(r.this_month)}</span></div>`:""}`}
+  catch(e){out.innerHTML=`<p class="small" style="color:var(--bad)">${e?.code==="not_granted"?"AI access was declined. Allow it from the page's permissions.":e?.code==="rate_limited"?"Too many requests. Try again in a minute.":"Couldn't get a plan. Try again."}</p>`}
+  $("aiReview").disabled=false};
+const QS=["Which loan should I close first?","Should I prepay my home loan?","How do I stop reusing my credit card?","Is a balance transfer worth it?","Should I release my gold first?"];
+$("askChips").innerHTML=QS.map(q=>`<button class="chip" type="button" data-askq="${esc(q)}">${esc(q)}</button>`).join("");
+$("askChips").addEventListener("click",e=>{const b=e.target.closest("[data-askq]");if(b){$("askQ").value=b.dataset.askq;fireSubmit($("askForm"))}});
+let askAbort=null;
+$("askForm").addEventListener("submit",async e=>{e.preventDefault();const q=$("askQ").value.trim();if(!q)return;const out=$("askOut");out.hidden=false;const sample=await getSample();
+  if(!sample){out.textContent="The AI coach needs an internet connection. Try again when you are online.";return}
+  askAbort?.abort();askAbort=new AbortController();out.textContent="Thinking…";$("askBtn").disabled=true;
+  try{await sample(`${RULES}\n\nDATA:\n${JSON.stringify(summary())}\n\nQUESTION: ${q}\n\nAnswer in under 180 words, plain text, using the person's real numbers.`,{signal:askAbort.signal,cache:false,onText:({text})=>{out.textContent=text}})}
+  catch(err){if(err?.code!=="aborted")out.textContent=err?.code==="rate_limited"?"Too many requests. Try again in a minute.":"Couldn't answer that. Try again."}
+  $("askBtn").disabled=false});
+
+/* ================= privacy ================= */
+function setHide(v){HIDE=v;try{localStorage.setItem("pz-hide",v?"1":"0")}catch(e){}render()}
+$("eyeBtn").onclick=()=>setHide(!HIDE);$("hideToggle").onclick=()=>setHide(!HIDE);
+async function hashPin(p){try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("purse-zero:"+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){let h=0;for(const c of "pz"+p)h=(h*31+c.charCodeAt(0))|0;return "x"+h}}
+let entry="",unlocked=false;try{unlocked=sessionStorage.getItem("pz-unlocked")==="1"}catch(e){}
+const drawDots=()=>$("dots").innerHTML=Array.from({length:Math.max(4,S.pinLen||4)},(_,i)=>`<i class="${i<entry.length?"on":""}"></i>`).join("");
+$("keys").innerHTML=["1","2","3","4","5","6","7","8","9","","0","⌫"].map(k=>k?`<button type="button" data-key="${k}" aria-label="${k==="⌫"?"Delete":k}">${k}</button>`:`<button type="button" class="blank" tabindex="-1" aria-hidden="true"></button>`).join("");
+function lockNow(){if(!S.pinHash)return;unlocked=false;try{sessionStorage.removeItem("pz-unlocked")}catch(e){}entry="";drawDots();$("forgotForm").hidden=true;$("lock").hidden=false}
+function checkLock(){if(S.pinHash&&!unlocked)lockNow();if(!S.pinHash)$("lock").hidden=true}
+async function tryUnlock(){if(entry.length<4)return;const h=await hashPin(entry);
+  if(h===S.pinHash){unlocked=true;try{sessionStorage.setItem("pz-unlocked","1")}catch(e){}$("lock").hidden=true;entry=""}
+  else if(entry.length>=(S.pinLen||6)){const d=$("dots");d.classList.remove("shake");void d.offsetWidth;d.classList.add("shake");entry="";setTimeout(drawDots,350)}}
+$("keys").addEventListener("click",e=>{const k=e.target.closest("[data-key]")?.dataset.key;if(!k)return;if(k==="⌫")entry=entry.slice(0,-1);else if(entry.length<6)entry+=k;drawDots();tryUnlock()});
+document.addEventListener("keydown",e=>{if($("lock").hidden)return;if(/^\d$/.test(e.key)&&entry.length<6){entry+=e.key;drawDots();tryUnlock()}else if(e.key==="Backspace"){entry=entry.slice(0,-1);drawDots()}});
+$("forgot").onclick=()=>{$("forgotForm").hidden=false;$("forgotSal").focus()};
+$("forgotForm").addEventListener("submit",e=>{e.preventDefault();if(+$("forgotSal").value===+S.income&&S.income>0){S.pinHash="";S.pinLen=0;save();unlocked=true;$("lock").hidden=true;render();toast("PIN removed")}else toast("That doesn't match the saved salary")});
+$("lockBtn").onclick=()=>{if(S.pinHash)lockNow();else{oSeg="set";show("more");renderMore();toast("Set a PIN first")}};
+let hiddenAt=0;document.addEventListener("visibilitychange",()=>{if(document.hidden)hiddenAt=Date.now();else if(S.pinHash&&hiddenAt&&Date.now()-hiddenAt>60000)lockNow()});
+$("pinSave").onclick=async()=>{const a=$("pin1").value,b=$("pin2").value;if(!/^\d{4,6}$/.test(a)){toast("Use 4 to 6 digits");return}if(a!==b){toast("The PINs don't match");return}
+  S.pinHash=await hashPin(a);S.pinLen=a.length;unlocked=true;try{sessionStorage.setItem("pz-unlocked","1")}catch(e){}save();$("pin1").value=$("pin2").value="";renderMore();toast("PIN set")};
+$("pinRemove").onclick=()=>{S.pinHash="";S.pinLen=0;save();renderMore();toast("PIN removed")};
+$("wipeAll").onclick=()=>askConfirm("Erase all your data in Purse Zero? This can't be undone.",()=>{S=blankState();save();render();toast("Everything erased")});
+
+(()=>{let t=location.hash.slice(1);try{t=t||sessionStorage.getItem("pz-tab")}catch(e){}if(TITLES[t])show(t)})();
+render();drawDots();checkLock();
+})();
+</script>
+
+</body>
+</html>

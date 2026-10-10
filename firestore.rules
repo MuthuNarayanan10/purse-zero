@@ -1,0 +1,9 @@
+rules_version = '2';
+// Each person can read and write only their own folder. Nobody else, not even other signed-in users.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
