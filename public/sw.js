@@ -1,6 +1,6 @@
 // Lets Purse Zero install as an app and open without internet (shows your last saved data).
-const CACHE = "purse-zero-v1";
-const SHELL = ["/", "/index.html", "/config.js", "/firebase-shim.js", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE = "purse-zero-v4";
+const SHELL = ["/", "/index.html", "/config.js", "/firebase-shim.js", "/smart-coach.js", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {

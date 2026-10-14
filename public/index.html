@@ -11,13 +11,15 @@
 <meta name="apple-mobile-web-app-title" content="Purse Zero">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" href="/icons/favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="/config.js"></script>
+<script src="/smart-coach.js"></script>
 <script src="/firebase-shim.js"></script>
 </head>
 <body>
@@ -1386,7 +1388,7 @@ $("aiReview").onclick=async()=>{const out=$("aiOut");out.hidden=false;const samp
   $("aiReview").disabled=true;out.innerHTML=`<p class="small muted">Reading your loans and payments…</p>`;
   try{const r=await sample.json(`${RULES}\n\nDATA:\n${JSON.stringify(summary())}\n\nReply ONLY with JSON: {"headline":"one sentence with the debt-free month","moves":[{"title":"short action","why":"1-2 sentences with numbers","saves_inr":number}],"this_month":"what to do with this month's money in one sentence"}. 4-6 moves, most valuable first. If anything is overdue or a gold renewal is within 30 days, the first move addresses it.`,{modelTier:"default",cache:false});
     out.innerHTML=`<h3>${esc(r.headline)}</h3><div class="moves">${(r.moves||[]).map(m=>`<div class="move"><b>${esc(m.title)}</b>${m.saves_inr&&!HIDE?` <span class="imp">saves ~${money(m.saves_inr)}</span>`:""}<p class="small muted">${esc(m.why)}</p></div>`).join("")}</div>${r.this_month?`<div class="alert info"><span class="dot"></span><span><b>This month:</b> ${esc(r.this_month)}</span></div>`:""}`}
-  catch(e){out.innerHTML=`<p class="small" style="color:var(--bad)">${e?.code==="not_granted"?"AI access was declined. Allow it from the page's permissions.":e?.code==="rate_limited"?"Too many requests. Try again in a minute.":"Couldn't get a plan. Try again."}</p>`}
+  catch(e){out.innerHTML=`<p class="small" style="color:var(--bad)">${e?.code==="off"?"The AI coach is switched off (no API key added). Everything else in the app works and stays free.":e?.code==="not_granted"?"AI access was declined.":e?.code==="rate_limited"?"Too many requests. Try again in a minute.":"Couldn't get a plan. Try again."}</p>`}
   $("aiReview").disabled=false};
 const QS=["Which loan should I close first?","Should I prepay my home loan?","How do I stop reusing my credit card?","Is a balance transfer worth it?","Should I release my gold first?"];
 $("askChips").innerHTML=QS.map(q=>`<button class="chip" type="button" data-askq="${esc(q)}">${esc(q)}</button>`).join("");
@@ -1396,7 +1398,7 @@ $("askForm").addEventListener("submit",async e=>{e.preventDefault();const q=$("a
   if(!sample){out.textContent="The AI coach needs an internet connection. Try again when you are online.";return}
   askAbort?.abort();askAbort=new AbortController();out.textContent="Thinking…";$("askBtn").disabled=true;
   try{await sample(`${RULES}\n\nDATA:\n${JSON.stringify(summary())}\n\nQUESTION: ${q}\n\nAnswer in under 180 words, plain text, using the person's real numbers.`,{signal:askAbort.signal,cache:false,onText:({text})=>{out.textContent=text}})}
-  catch(err){if(err?.code!=="aborted")out.textContent=err?.code==="rate_limited"?"Too many requests. Try again in a minute.":"Couldn't answer that. Try again."}
+  catch(err){if(err?.code!=="aborted")out.textContent=err?.code==="off"?"The AI coach is switched off (no API key added).":err?.code==="rate_limited"?"Too many requests. Try again in a minute.":"Couldn't answer that. Try again."}
   $("askBtn").disabled=false});
 
 /* ================= privacy ================= */

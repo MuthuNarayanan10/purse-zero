@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Purse Zero Admin</title>
+<meta name="theme-color" content="#0E1330">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="/icons/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: admin console in the app's look: night header, white cards, one list of people you can act on. */
+:root{
+  --bg:#F3F5FA; --surface:#FFFFFF; --surface-2:#F0F2F8; --ink:#0D1222; --muted:#5F677E; --line:#E3E7F0;
+  --blue:#2F5BFF; --blue-soft:#E7ECFF; --night:#0E1330; --night-2:#1B2457; --gold:#B07F12; --gold-soft:#FBF1D8;
+  --good:#11994C; --good-bg:#E2F6E9; --warn:#B86E00; --warn-bg:#FFF2D8; --bad:#DC2F47; --bad-bg:#FDE7EA;
+  --shadow:0 1px 2px rgba(16,24,64,.05),0 8px 24px rgba(16,24,64,.07);
+  --f-display:"Syne","Avenir Next",system-ui,sans-serif; --f-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#090C17; --surface:#121829; --surface-2:#1A2136; --ink:#EEF1FA; --muted:#97A0BA; --line:#252E47;
+  --blue:#7390FF; --blue-soft:#1A2656; --night:#151B3A; --night-2:#24306B; --gold:#E6BC57; --gold-soft:#2C2614;
+  --good:#3FD883; --good-bg:#10301F; --warn:#FFC24F; --warn-bg:#33270E; --bad:#FF6F85; --bad-bg:#3A1621; --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding:0 16px}
+.wrap{max-width:820px;margin:0 auto;padding-block:16px 60px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{margin:0;line-height:1.15;text-wrap:balance}
+h1{font-family:var(--f-display);font-size:1.3rem;font-weight:800}
+h2{font-family:var(--f-display);font-size:1.05rem;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:.84rem} .tiny{font-size:.75rem}
+.label{font-size:.68rem;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);font-weight:800}
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:40px;height:40px;border-radius:13px}
+.hero{border-radius:22px;padding:18px;color:#fff;background:radial-gradient(90% 120% at 100% 0%,rgba(47,91,255,.55),transparent 60%),linear-gradient(160deg,var(--night),var(--night-2));display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px}
+.hero .label{color:rgba(255,255,255,.7)}
+.hero b{display:block;font-family:var(--f-display);font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border-radius:20px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--muted);font-weight:700;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;min-width:0;font-size:16px}
+textarea{min-height:70px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:1px;border-color:transparent}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.row>*{flex:1 1 160px}
+.btn{font:inherit;font-weight:800;cursor:pointer;border-radius:12px;padding:10px 16px;border:0;background:var(--blue);color:#fff;font-size:.88rem}
+.btn.dark{background:var(--ink);color:var(--surface)} .btn.ghost{background:var(--blue-soft);color:var(--blue)}
+.btn.good{background:var(--good);color:#fff} .btn.danger{background:var(--bad-bg);color:var(--bad)} .btn.warn{background:var(--warn-bg);color:var(--warn)}
+.btn.sm{padding:7px 11px;font-size:.78rem;border-radius:10px}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:800;white-space:nowrap}
+.pill.active{background:var(--good-bg);color:var(--good)} .pill.pending{background:var(--warn-bg);color:var(--warn)} .pill.blocked{background:var(--bad-bg);color:var(--bad)}
+.pill.pro{background:var(--gold-soft);color:var(--gold)} .pill.free{background:var(--surface-2);color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.user{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.user:first-child{border-top:0}
+.av{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-weight:800}
+.user .who{min-width:0}
+.user .who b{display:block;overflow-wrap:anywhere}
+.user .who span{display:block;font-size:.76rem;color:var(--muted);overflow-wrap:anywhere}
+.user .tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.user .acts{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.user .acts input{width:90px;flex:none;padding:6px 8px;font-size:14px}
+.ai{font-size:.76rem;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.note{background:var(--blue-soft);border-radius:14px;padding:10px 14px;font-size:.84rem}
+.gate{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-weight:700;font-size:.86rem;max-width:calc(100% - 32px)}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="/config.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><img src="/icons/icon-192.png" alt=""><div><h1>Purse Zero Admin</h1><span class="tiny muted" id="who"></span></div></div>
+    <div style="display:flex;gap:8px"><a class="btn ghost sm" href="/" style="text-decoration:none">Open app</a><button class="btn ghost sm" type="button" id="out" hidden>Sign out</button></div>
+  </div>
+
+  <div class="gate" id="gate">
+    <p class="muted" id="gateMsg">Loading…</p>
+    <button class="btn" type="button" id="signin" hidden>Sign in with Google</button>
+  </div>
+
+  <div id="main" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div class="hero" id="stats"></div>
+
+    <div class="card">
+      <div class="head"><h2>Who can join</h2><span class="tiny muted" id="savedAt"></span></div>
+      <div class="row">
+        <label class="f">Sign‑ups<select id="signups">
+          <option value="approval">Anyone can request, I approve</option>
+          <option value="invite">Instant with invite code, others wait for approval</option>
+          <option value="open">Open to anyone</option>
+        </select></label>
+        <label class="f">Invite code<input id="inviteCode" maxlength="24" placeholder="e.g. PURSE2026"></label>
+      </div>
+      <div class="row">
+        <label class="f">Free plan: AI questions / month<input id="freeAiLimit" type="number" min="0" inputmode="numeric" placeholder="10"></label>
+        <label class="f">Pro plan: AI questions / month<input id="proAiLimit" type="number" min="0" inputmode="numeric" placeholder="100"></label>
+      </div>
+      <label class="f">Notice shown to everyone (leave empty for none)<textarea id="notice" maxlength="280" placeholder="e.g. New: Settle tab to plan foreclosures."></textarea></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="saveSettings">Save</button><button class="btn ghost" type="button" id="copyInvite">Copy invite link</button><button class="btn ghost" type="button" id="genCode">New code</button></div>
+    </div>
+
+    <div class="card">
+      <div class="head"><h2>People</h2><input id="q" placeholder="Search name or email" style="max-width:240px" aria-label="Search people"></div>
+      <div class="chips" id="filters"></div>
+      <div id="list"></div>
+      <p class="note">Privacy: you manage access, plans, AI limits and PIN resets. You can't see anyone's loans, payments or amounts; only they can.</p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(()=>{
+const cfg=window.PZ_CONFIG||{},$=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ADMINS=(cfg.adminEmails||[]).map(e=>String(e).toLowerCase());
+const month=new Date().toISOString().slice(0,7);
+function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
+if(!cfg.firebase||/^PASTE/.test(cfg.firebase.apiKey||"")){$("gateMsg").textContent="Setup isn't finished: fill in config.js first.";return}
+firebase.initializeApp(cfg.firebase);
+const auth=firebase.auth(),db=firebase.firestore();
+let PEOPLE=[],SET={},filter="all",unsub=null;
+
+$("signin").onclick=async()=>{try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){try{await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider())}catch(e2){$("gateMsg").textContent=e2.message}}};
+$("out").onclick=async()=>{await auth.signOut();location.reload()};
+
+auth.onAuthStateChanged(async u=>{
+  if(!u){$("gate").hidden=false;$("main").hidden=true;$("gateMsg").textContent="Sign in with your admin Google account.";$("signin").hidden=false;return}
+  $("who").textContent=u.email;$("out").hidden=false;
+  if(!ADMINS.includes(String(u.email).toLowerCase())){$("gateMsg").textContent="This account isn't an admin.";$("signin").hidden=true;return}
+  try{
+    const s=await db.doc("settings/app").get();SET=s.exists?s.data():{};fillSettings();
+    unsub=db.collection("profiles").onSnapshot(snap=>{PEOPLE=snap.docs.map(d=>({id:d.id,...d.data()}));render()},err=>{$("gateMsg").textContent="Can't read profiles: "+err.message+". Check the admin email in firestore.rules.";$("gate").hidden=false;$("main").hidden=true});
+    $("gate").hidden=true;$("main").hidden=false;
+  }catch(e){$("gateMsg").textContent="Can't open admin: "+e.message+". Check the admin email in firestore.rules."}
+});
+
+function fillSettings(){$("signups").value=SET.signups||"approval";$("inviteCode").value=SET.inviteCode||"";$("freeAiLimit").value=SET.freeAiLimit??"";$("proAiLimit").value=SET.proAiLimit??"";$("notice").value=SET.notice||""}
+$("saveSettings").onclick=async()=>{
+  const n=v=>v===""?null:Math.max(0,Math.round(+v));
+  const data={signups:$("signups").value,inviteCode:$("inviteCode").value.trim(),notice:$("notice").value.trim()};
+  const f=n($("freeAiLimit").value),p=n($("proAiLimit").value);
+  data.freeAiLimit=f===null?firebase.firestore.FieldValue.delete():f;data.proAiLimit=p===null?firebase.firestore.FieldValue.delete():p;
+  if(data.signups==="invite"&&!data.inviteCode){toast("Add an invite code first");return}
+  try{await db.doc("settings/app").set(data,{merge:true});SET={...SET,...data,freeAiLimit:f??undefined,proAiLimit:p??undefined};$("savedAt").textContent="Saved";toast("Settings saved")}catch(e){toast("Couldn't save: "+e.message)}
+};
+$("genCode").onclick=()=>{const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let c="";for(let i=0;i<8;i++)c+=a[Math.floor(Math.random()*a.length)];$("inviteCode").value=c;toast("New code. Tap Save to use it")};
+$("copyInvite").onclick=async()=>{const code=$("inviteCode").value.trim();const link=location.origin+"/"+(code&&$("signups").value==="invite"?"?invite="+encodeURIComponent(code):"");
+  const text=`Join me on Purse Zero, a private app to track EMIs, loans and payments: ${link}`;
+  try{await navigator.clipboard.writeText(text);toast("Invite link copied")}catch(e){prompt("Copy this link",link)}};
+
+function limitOf(p){return Number.isFinite(p.aiLimit)?p.aiLimit:p.plan==="pro"?(SET.proAiLimit??100):(SET.freeAiLimit??10)}
+function render(){
+  const c={all:PEOPLE.length,pending:0,active:0,blocked:0,pro:0};let ai=0;const wk=new Date(Date.now()-7*864e5).toISOString().slice(0,10);let recent=0;
+  PEOPLE.forEach(p=>{c[p.status]=(c[p.status]||0)+1;if(p.plan==="pro")c.pro++;ai+=(p.aiUsed&&p.aiUsed[month])||0;if((p.lastSeen||"")>=wk)recent++});
+  $("stats").innerHTML=[["People",c.all],["Waiting",c.pending],["Active this week",recent],["Pro",c.pro],["AI questions this month",ai]].map(([l,v])=>`<div><span class="label">${l}</span><b>${v}</b></div>`).join("");
+  $("filters").innerHTML=[["all","All"],["pending","Waiting"],["active","Active"],["blocked","Blocked"],["pro","Pro"]].map(([k,l])=>`<button class="chip" type="button" data-f="${k}" aria-pressed="${filter===k}">${l} ${k==="pro"?c.pro:c[k]||0}</button>`).join("");
+  const q=$("q").value.trim().toLowerCase();
+  const list=PEOPLE.filter(p=>(filter==="all"||(filter==="pro"?p.plan==="pro":p.status===filter))&&(!q||`${p.name} ${p.email}`.toLowerCase().includes(q)))
+    .sort((a,b)=>(a.status==="pending"?-1:0)-(b.status==="pending"?-1:0)||String(b.lastSeen||"").localeCompare(String(a.lastSeen||"")));
+  $("list").innerHTML=list.length?list.map(p=>{const used=(p.aiUsed&&p.aiUsed[month])||0,admin=ADMINS.includes(String(p.email).toLowerCase());
+    return `<div class="user" data-id="${p.id}"><span class="av">${esc((p.name||p.email||"?").trim()[0]||"?").toUpperCase()}</span>
+      <div class="who"><b>${esc(p.name||"(no name)")}${admin?" · admin":""}</b><span>${esc(p.email)}</span><span>Joined ${esc(p.createdAt||"—")} · last seen ${esc(p.lastSeen||"—")}${p.invite?` · invite ${esc(p.invite)}`:""}</span></div>
+      <div class="tags"><span class="pill ${esc(p.status)}">${p.status==="pending"?"Waiting":esc(p.status)}</span><span class="pill ${p.plan==="pro"?"pro":"free"}">${p.plan==="pro"?"Pro":"Free"}</span></div>
+      <div class="acts">
+        ${p.status!=="active"?`<button class="btn good sm" type="button" data-act="approve">${p.status==="blocked"?"Unblock":"Approve"}</button>`:admin?"":`<button class="btn danger sm" type="button" data-act="block">Block</button>`}
+        <button class="btn ghost sm" type="button" data-act="plan">${p.plan==="pro"?"Make Free":"Make Pro"}</button>
+        <button class="btn warn sm" type="button" data-act="pin"${p.pinReset?" disabled":""}>${p.pinReset?"PIN reset pending":"Reset PIN"}</button>
+        <span class="ai">AI ${used}/${limitOf(p)}</span>
+        <input type="number" min="0" inputmode="numeric" placeholder="limit" value="${Number.isFinite(p.aiLimit)?p.aiLimit:""}" aria-label="AI limit for ${esc(p.email)}" data-limit>
+        <button class="btn ghost sm" type="button" data-act="limit">Set</button>
+      </div></div>`}).join(""):`<p class="small muted">${PEOPLE.length?"No one matches.":"No one has signed up yet. Share your invite link."}</p>`;
+}
+$("q").addEventListener("input",render);
+document.addEventListener("click",async e=>{
+  const f=e.target.closest("[data-f]");if(f){filter=f.dataset.f;render();return}
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const row=b.closest(".user"),id=row.dataset.id,p=PEOPLE.find(x=>x.id===id),ref=db.doc("profiles/"+id);
+  try{
+    if(b.dataset.act==="approve"){await ref.update({status:"active"});toast(`${p.name||p.email} can use the app now`)}
+    if(b.dataset.act==="block"){if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Tap to confirm";return}await ref.update({status:"blocked"});toast("Blocked. Their data stays private and untouched")}
+    if(b.dataset.act==="plan"){await ref.update({plan:p.plan==="pro"?"free":"pro"});toast("Plan changed")}
+    if(b.dataset.act==="pin"){await ref.update({pinReset:true});toast("They'll be asked to set a new PIN next time they open the app")}
+    if(b.dataset.act==="limit"){const v=row.querySelector("[data-limit]").value.trim();await ref.update({aiLimit:v===""?firebase.firestore.FieldValue.delete():Math.max(0,Math.round(+v))});toast(v===""?"Using the plan's default limit":"AI limit set to "+v)}
+  }catch(err){toast("Couldn't update: "+err.message)}
+});
+})();
+</script>
+</body>
+</html>

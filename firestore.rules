@@ -1,9 +1,58 @@
 rules_version = '2';
-// Each person can read and write only their own folder. Nobody else, not even other signed-in users.
+// Purse Zero security rules.
+// STEP: replace PASTE_YOUR_GMAIL@gmail.com below with your Google email (the same one as in config.js).
+//
+// What these rules guarantee:
+//  - Each person's money data (users/{uid}/...) can be read and written ONLY by that person,
+//    and only while their account is active. Admins cannot read anyone's money data.
+//  - Profiles (name, email, status, plan) are visible to the owner and to admins.
+//    People can't approve themselves, change their own plan, or raise their own AI limit.
+//  - App settings (sign-up mode, invite code, notice, limits) can be changed only by admins.
 service cloud.firestore {
-  match /databases/{database}/documents {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && request.auth.token.email_verified == true
+        && request.auth.token.email in ['amrmuthu10@gmail.com'];
+    }
+    function settingsPath() { return /databases/$(db)/documents/settings/app; }
+    function profilePath(uid) { return /databases/$(db)/documents/profiles/$(uid); }
+    function signupMode() { return exists(settingsPath()) ? get(settingsPath()).data.get('signups', 'approval') : 'approval'; }
+    function inviteCode() { return exists(settingsPath()) ? get(settingsPath()).data.get('inviteCode', '') : ''; }
+    function statusForNewUser(d) {
+      return signupMode() == 'open' ? 'active'
+        : (signupMode() == 'invite' && inviteCode() != '' && d.get('invite', '') == inviteCode()) ? 'active'
+        : 'pending';
+    }
+    function isActive(uid) {
+      return isAdmin() || (exists(profilePath(uid)) && get(profilePath(uid)).data.status == 'active');
+    }
+
+    // Private money data
     match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if signedIn() && request.auth.uid == uid && isActive(uid);
+    }
+
+    // Profiles
+    match /profiles/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'name', 'createdAt', 'lastSeen', 'status', 'plan', 'invite'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.plan == 'free'
+        && request.resource.data.status == statusForNewUser(request.resource.data));
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'lastSeen', 'pinReset'])
+        && request.resource.data.get('pinReset', false) == false);
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
+    // App-wide settings
+    match /settings/app {
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
   }
 }

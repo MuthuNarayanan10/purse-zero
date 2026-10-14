@@ -1,0 +1,8 @@
+{
+  "name": "purse-zero",
+  "private": true,
+  "description": "Purse Zero shared edition (Netlify + Firebase)",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
